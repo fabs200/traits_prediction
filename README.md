@@ -1,2 +1,2 @@
-# crypto_owners
-who are the crypto owner
+# infer behavioral traits from psd2 data
+infer behavioral traits from psd2 data

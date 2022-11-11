@@ -43,64 +43,6 @@ financial_account_features = [
     'numberofdepotaccounts'
 ]
 
-selected_features = [
-    'avg_sc_elektrohandel',
-    'avg_sc_virtuelle_gueter',
-    'avg_sc_geraeteversicherung',
-    'avg_sc_werkstatt_service',
-    'avg_sc_prime_mitgliedschaft',
-    'avg_sc_lebensmittel_abo',
-    'avg_sc_kino',
-    'avg_sc_kapitalanlage',
-    'avg_sc_krankenversicherung',
-    'avg_sc_tierbedarf',
-    'avg_sc_tanken',
-    'avg_sc_apotheke',
-    'avg_sc_bahntickets',
-    'avg_sc_hotel_urlaubswohnung',
-    'avg_sc_kantine',
-    'avg_sc_kreditkartenabrechnu',
-    'avg_sc_taxi',
-    'avg_sc_drogerie',
-    'avg_sc_tickets',
-    'avg_sc_verlag_zeitung',
-    'avg_sc_versandhandel',
-    'avg_sc_fluege',
-    'avg_sc_lieferservice',
-    'avg_sc_rentenversicherung',
-    'avg_sc_restaurant',
-    # 'log_mc_einkommen',
-    # 'log_mc_finanzausgaben',
-    # 'log_mc_shoppingausgaben',
-    # 'log_mc_sparen_vorsorgeaus',
-    # 'log_mc_sonstige_ausgaben',
-    # 'log_mc_sonstige_einnahmen'
-    # 'i_geek',
-    # 'i_life_style'
-]
-
-# transformed_features = [
-#     'log_sc_virtuelle_gueter',
-#     'log_sc_versandhandel',
-#     'log_sc_sonstige_shopping',
-#     'log_sc_elektrohandel',
-#     'log_sc_geraeteversicherung',
-#     'log_sc_internet_telefon',
-#     'log_sc_verlag_zeitung'
-# ]
-
-behavioral_traits_features = [
-    'risk_std',
-    'trust_std',
-    'patience_std',
-    'procrastination_std',
-    'effort_std',
-    # 'selfcontrol_std',
-    # 'lossaversion_std',
-    'selfcontrol_factor',
-    'lossaversion_factor'
-]
-
 feature_names_nicely = {
     'log_mc_barentnahmen':          'cash withdrawals',
     'log_mc_bildungberufsausga':    'educational/vocational expenses',

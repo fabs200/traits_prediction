@@ -1,8 +1,8 @@
 from features_sets import *
 
-project_path = "/Users/fabiannemeczek/Library/CloudStorage/OneDrive-Persönlich/Projekt/Crypto_Ownership/"
-graphs_path = project_path + "out/graphs/08_prediction/"
-tables_path = project_path + "out/tables/07_prediction/"
+project_path = "/Users/fabiannemeczek/Library/CloudStorage/OneDrive-Persönlich/Projekt/Traits_PSD2_Prediction/"
+graphs_path = project_path + "out/graphs/prediction/"
+tables_path = project_path + "out/tables/prediction/"
 external_data_path = '/Users/fabiannemeczek/Dropbox/MPC_BIG5/4_data/databricks'
 
 model = {
@@ -27,7 +27,6 @@ model = {
     'min_samples_leaf': 1,  # The minimum number of samples required to be at a leaf node, default 1
     'max_features': 10,  # The number of features to consider when looking for the best split, default "sqrt"
     'n_estimators': 500,  # number of trees
-    'class_weight': "balanced"  # default: None, class weights e.g. y={0, 1} -> weights={1:10}
 }
 
 random_forest_param_grid = {
@@ -39,19 +38,9 @@ random_forest_param_grid = {
     'n_estimators': [200, 300, 500]
 }
 
-
 feature_sets = {
-    'feature_set_1': consumption_features,
-    'feature_set_2': consumption_features + demographics_features,
-    'feature_set_3': financial_account_features,
-    'feature_set_4': financial_account_features + demographics_features,
-    'feature_set_5': financial_account_features + consumption_features,
-    'feature_set_6': financial_account_features + consumption_features + demographics_features,
-    'feature_set_7': financial_account_features + consumption_features + demographics_features + selected_features,
-    'feature_set_8': financial_account_features + consumption_features + selected_features,
-    'feature_set_9': consumption_features + demographics_features + selected_features,
-    'feature_set_10': consumption_features + selected_features,
-    'feature_set_11': selected_features,
-    'feature_set_12': consumption_features + behavioral_traits_features,
+    # 'feature_set_1': consumption_features,
+    'feature_set_2': consumption_features + financial_account_features,
+    'feature_set_3': consumption_features + demographics_features,
+    'feature_set_4': consumption_features + financial_account_features + demographics_features,
 }
-

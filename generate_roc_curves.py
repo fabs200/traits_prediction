@@ -1,9 +1,9 @@
 from matplotlib import pyplot as plt
-from model_evaluation import model_evaluation
+from model_evaluation import ModelEvaluation
 from config import feature_sets
 from config import model
 from utils import extract_model_specification
-from load_data import df_crypto_prep
+from load_data import df_prep
 from itertools import cycle
 
 from sklearn.ensemble import RandomForestClassifier
@@ -24,7 +24,7 @@ if __name__ == "__main__":
         if not model['do_grid_seary']: print(model['current_model'])
 
         # set dataframe, X, y
-        df = df_crypto_prep[feature_sets[feat_set_] + depvar].dropna(axis=0)
+        df = df_prep[feature_sets[feat_set_] + depvar].dropna(axis=0)
         X = df[feature_sets[feat_set_]]
         y = df[depvar]
 
@@ -51,7 +51,7 @@ if __name__ == "__main__":
         y_pred = model_.predict(X_test)
 
 
-        fpr, tpr, auc_score = model_evaluation.get_auc_score(
+        fpr, tpr, auc_score = ModelEvaluation.get_auc_score(
             X_train=X_train, y_train=y_train,
             X_test=X_test, y_test=y_test,
             y_pred=y_pred,
