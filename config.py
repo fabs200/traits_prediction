@@ -39,7 +39,7 @@ random_forest_param_grid = {
 }
 
 feature_sets = {
-    # 'feature_set_1': consumption_features,
+    'feature_set_1': consumption_features,
     'feature_set_2': consumption_features + financial_account_features,
     'feature_set_3': consumption_features + demographics_features,
     'feature_set_4': consumption_features + financial_account_features + demographics_features,

@@ -54,7 +54,7 @@ if __name__ == "__main__":
             # if not model['do_grid_seary']: print(model['current_model'])
 
             # set dataframe, X, y
-            df = df_prep[feature_sets[feat_set_] + [depvar]].dropna(axis=0).fillna(0)
+            df = df_prep[feature_sets[feat_set_] + [depvar]].dropna(axis=0)
             X = df[feature_sets[feat_set_]]
             y = df[depvar]
 
@@ -136,7 +136,7 @@ if __name__ == "__main__":
 
         df_feat_importances = model_eval_results.get_feature_importances(filepath=graphs_path)
         df_critereons = model_eval_results.criterions(verbose=True)
-        # model_eval_results.violin_plots()
+        model_eval_results.violin_plots(filepath=graphs_path)
 
         """
         Store results

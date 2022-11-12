@@ -88,3 +88,6 @@ for col in ['sc_virtuelle_gueter',
     df_prep[f'log_{col}'] = np.log(df_prep[f'{col}'])
     df_prep[f'log_{col}'] = df_prep[f'log_{col}'].fillna(0)
     df_prep[f'log_{col}'] = df_prep[f'log_{col}'].replace([np.inf, -np.inf], 0)
+
+# Exclude single obs where we partly missings among traits, and thus predicted y have not same lenghts
+df_prep = df_prep[df_prep["token"] != "X9464974DA0"]

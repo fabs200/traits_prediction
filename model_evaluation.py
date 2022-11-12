@@ -142,9 +142,6 @@ class ModelEvaluation:
 
         for target in self.targets:
 
-            print("self.y_test\n", self._y_tests_collected[target])
-            print("self._y_preds_collected[target]\n", self._y_preds_collected[target])
-
             r2_collected[target] = metrics.r2_score(y_true=self._y_tests_collected[target],
                                                     y_pred=self._y_preds_collected[target])
             mae_collected[target] = metrics.mean_absolute_error(y_true=self._y_tests_collected[target],
@@ -158,7 +155,7 @@ class ModelEvaluation:
                 print(f"r2: {round(r2_collected[target], 2)}")
                 print(f"mae: {round(mae_collected[target], 2)}")
                 print(f"rmse: {round(rmse_collected[target], 2)}")
-                print(f"explained_variance_score_collected: {round(evs_collected[target], 2)}")
+                print(f"evs: {round(evs_collected[target], 2)}")
 
         df = pd.DataFrame([], columns=["criterion"]+self.targets)
         for i, df_metrics in enumerate([r2_collected, mae_collected, rmse_collected, evs_collected]):
@@ -167,6 +164,27 @@ class ModelEvaluation:
 
         return df
 
-    def violin_plots(self):
-        pass
-        # TODO
+    def violin_plots(self, filepath=None):
+
+        # prepare filename and cut out target, as we investigate all violinplots at once
+        filename_ = self.model_specs_collected[self.targets[0]].replace(self.targets[0], "")
+
+        # prepare y_tests and y_preds, and put together into one df
+        df_y_tests_collected = pd.DataFrame.from_dict(self._y_tests_collected)
+        df_y_tests_collected['y'] = 'test data'
+        # for x in self._y_preds_collected:
+        #     print(x, len(self._y_preds_collected[x]))
+        df_y_preds_collected = pd.DataFrame(self._y_preds_collected)
+        df_y_preds_collected['y'] = 'predicted data'
+        df = df_y_tests_collected.append(df_y_preds_collected, ignore_index=True)
+        # rename cols (drop _std, _factor)
+        df.columns = df.columns.str.replace('_std', '')
+        df.columns = df.columns.str.replace('_factor', '')
+        # pivot df for plotting
+        df = pd.melt(df, id_vars='y', value_vars=[col for col in df.columns if col != "y"])
+        if self._plot:
+            sns.violinplot(data=df, x="variable", y="value", hue="y")
+            plt.tight_layout()
+            if self._save_plot:
+                plt.savefig(filepath + f'violinplot_{filename_}.png')
+            plt.show()
