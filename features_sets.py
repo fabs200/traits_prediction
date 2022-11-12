@@ -40,7 +40,7 @@ financial_account_features = [
     'numberofcurrentaccounts',
     'daysinoverdraft',
     'numberofaccounts',
-    'numberofdepotaccounts'
+    # 'numberofdepotaccounts'
 ]
 
 feature_names_nicely = {
