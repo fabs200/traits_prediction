@@ -137,6 +137,7 @@ if __name__ == "__main__":
         df_feat_importances = model_eval_results.get_feature_importances(filepath=graphs_path)
         df_critereons = model_eval_results.criterions(verbose=True)
         model_eval_results.violin_plots(filepath=graphs_path)
+        model_eval_results.boxplots(filepath=graphs_path)
 
         """
         Store results

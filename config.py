@@ -22,11 +22,13 @@ model = {
     ### random forest
     'do_grid_seary': False,  # True if do a grid search and select best_params_, otherwise below params are chosen
 
-    'min_samples_split': 0.1,  # e.g. 0.1 = 10% or 10 = 10 obs, default 2
+    'min_samples_split': 5,  # e.g. 0.1 = 10% or 10 = 10 obs, default 2
     'max_depth': 10,  # max depth of tree, # nodes, default None
-    'min_samples_leaf': 1,  # The minimum number of samples required to be at a leaf node, default 1
-    'max_features': 10,  # The number of features to consider when looking for the best split, default "sqrt"
+    'min_samples_leaf': 10,  # The minimum number of samples required to be at a leaf node, default 1
+    'max_features': "sqrt",  # The number of features to consider when looking for the best split, default "sqrt"
     'n_estimators': 500,  # number of trees
+    'min_impurity_decrease': .05  # A node will be split if this split induces a decrease of the impurity greater
+                                  # than or equal to this value.
 }
 
 random_forest_param_grid = {
@@ -39,8 +41,9 @@ random_forest_param_grid = {
 }
 
 feature_sets = {
-    'feature_set_1': consumption_features,
-    'feature_set_2': consumption_features + financial_account_features,
-    'feature_set_3': consumption_features + demographics_features,
-    'feature_set_4': consumption_features + financial_account_features + demographics_features,
+    # 'feature_set_1': consumption_features,
+    # 'feature_set_2': consumption_features + financial_account_features,
+    # 'feature_set_3': consumption_features + demographics_features,
+    # 'feature_set_4': consumption_features + financial_account_features + demographics_features,
+    'feature_set_5': consumption_subcategories + demographics_features
 }

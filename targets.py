@@ -9,3 +9,12 @@ behavioral_traits = [
     'selfcontrol_factor',
     'lossaversion_factor'
 ]
+# behavioral_traits = [
+#     'risk',
+#     'trust',
+#     'patience',
+#     'procrastination',
+#     'effort',
+#     'selfcontrol',
+#     'lossaversion'
+# ]

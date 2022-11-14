@@ -38,9 +38,9 @@ def extract_model_specification(method='logistic', selected_feature_set=None, de
         # example: model_logistic_set7_ts03_cv5_Cs1_liblinear_l2
         model_ = f"model_{depvar}_{model['method']}_{selected_feature_set[8:].replace('_', '')}_ts{model['test_size']}_cv{model['cv']}_Cs{model['Cs']}_{model['solver']}_{model['penalty']}"
     else:
-        # format: model_randomforest_set<feature_set>_ts<ts>_mss<min_samples_split>_md<max_depth>_msl<min_samples_leaf>_mf<max_features>_ne<n_estimators>
+        # format: model_randomforest_set<feature_set>_ts<ts>_mss<min_samples_split>_md<max_depth>_msl<min_samples_leaf>_mf<max_features>_ne<n_estimators>_<mid>
         # example: model_randomforest_set7_ts03_mss02_md8_msl1_mf10_ne300
-        model_ = f"model_{depvar}_{model['method']}_{selected_feature_set[8:]}_ts{model['test_size']}_mss{model['min_samples_split']}_md{model['max_depth']}_msl{model['min_samples_leaf']}_mf{model['max_features']}_ne{model['n_estimators']}"
+        model_ = f"model_{depvar}_{model['method']}_{selected_feature_set[8:]}_ts{model['test_size']}_mss{model['min_samples_split']}_md{model['max_depth']}_msl{model['min_samples_leaf']}_mf{model['max_features']}_ne{model['n_estimators']}_mid{model['min_impurity_decrease']}"
     return model_
 
 

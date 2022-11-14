@@ -183,8 +183,37 @@ class ModelEvaluation:
         # pivot df for plotting
         df = pd.melt(df, id_vars='y', value_vars=[col for col in df.columns if col != "y"])
         if self._plot:
-            sns.violinplot(data=df, x="variable", y="value", hue="y")
+            g = sns.violinplot(data=df, x="variable", y="value", hue="y")
+            plt.legend(title='')
+            plt.xlabel("")
             plt.tight_layout()
             if self._save_plot:
                 plt.savefig(filepath + f'violinplot_{filename_}.png')
+            plt.show()
+
+    def boxplots(self, filepath=None):
+
+        # prepare filename and cut out target, as we investigate all violinplots at once
+        filename_ = self.model_specs_collected[self.targets[0]].replace(self.targets[0], "")
+
+        # prepare y_tests and y_preds, and put together into one df
+        df_y_tests_collected = pd.DataFrame.from_dict(self._y_tests_collected)
+        df_y_tests_collected['y'] = 'test data'
+        # for x in self._y_preds_collected:
+        #     print(x, len(self._y_preds_collected[x]))
+        df_y_preds_collected = pd.DataFrame(self._y_preds_collected)
+        df_y_preds_collected['y'] = 'predicted data'
+        df = df_y_tests_collected.append(df_y_preds_collected, ignore_index=True)
+        # rename cols (drop _std, _factor)
+        df.columns = df.columns.str.replace('_std', '')
+        df.columns = df.columns.str.replace('_factor', '')
+        # pivot df for plotting
+        df = pd.melt(df, id_vars='y', value_vars=[col for col in df.columns if col != "y"])
+        if self._plot:
+            g = sns.boxplot(data=df, x="variable", y="value", hue="y")
+            plt.legend(title='')
+            plt.xlabel("")
+            plt.tight_layout()
+            if self._save_plot:
+                plt.savefig(filepath + f'boxplot_{filename_}.png')
             plt.show()
