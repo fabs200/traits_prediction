@@ -4,6 +4,13 @@ import numpy as np
 import pandas as pd
 
 from config import project_path, external_data_path
+from features_sets import (
+    consumption_features,
+    consumption_subcategories,
+    demographics_features,
+    financial_account_features
+)
+from targets import behavioral_traits
 
 # capture warnings
 warnings.simplefilter(action='ignore', category=RuntimeWarning)
@@ -90,4 +97,19 @@ for col in ['sc_virtuelle_gueter',
     df_prep[f'log_{col}'] = df_prep[f'log_{col}'].replace([np.inf, -np.inf], 0)
 
 # Exclude single obs where we partly missings among traits, and thus predicted y have not same lenghts
-df_prep = df_prep[df_prep["token"] != "X9464974DA0"]
+# df_prep = df_prep[df_prep["token"] != "X9464974DA0"]
+
+for trait in behavioral_traits:
+    df_prep[trait].fillna(df_prep[trait].median())
+
+# df_prep = df_prep[behavioral_traits +
+#                   consumption_features +
+#                   consumption_subcategories +
+#                   demographics_features +
+#                   financial_account_features].dropna()
+
+# make dummies of all behavioral traits as target vars
+for trait in behavioral_traits:
+    df_prep[f'i_{trait}'] = 0
+    df_prep.loc[df_prep[trait] >= df_prep[trait].median(), f'i_{trait}'] = 1
+    df_prep[f'i_{trait}'] = df_prep[f'i_{trait}'].astype(int)
