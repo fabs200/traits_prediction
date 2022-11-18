@@ -4,7 +4,7 @@ import time
 import pandas as pd
 from sklearn.exceptions import DataConversionWarning
 from sklearn.linear_model import LogisticRegressionCV
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, GridSearchCV
 
 from config import model, feature_sets, random_forest_param_grid, tables_path, graphs_path
@@ -98,26 +98,26 @@ if __name__ == "__main__":
 
                 # grid search cv and initiate best_param_rf-model
                 if model['do_grid_search']:
-                    model_ = GridSearchCV(estimator=RandomForestRegressor(),
+                    model_ = GridSearchCV(estimator=RandomForestClassifier(),
                                           param_grid=random_forest_param_grid,
                                           cv=model['cv'],
                                           verbose=4)
-                    model_.fit(X_train, y_train[[depvar]])
+                    model_.fit(X_train, y_train)
                     print("best parameters of grid search:\n", model_.best_params_)
-                    rf = RandomForestRegressor(**model_.best_params_)
+                    rf = RandomForestClassifier(**model_.best_params_)
 
                     # set best params to model specification
                     set_model_params(best_params=model_.best_params_, model=model)
                     model_specs_ = extract_model_specification(method=model['method'],
                                                                selected_feature_set=feat_set_,
                                                                depvar=depvar)
-
                 else:
-                    rf = RandomForestRegressor(min_samples_split=model['min_samples_split'],
-                                               max_depth=model['max_depth'],
-                                               min_samples_leaf=model['min_samples_leaf'],
-                                               max_features=model['max_features'],
-                                               n_estimators=model['n_estimators'])
+                    rf = RandomForestClassifier(min_samples_split=model['min_samples_split'],
+                                                max_depth=model['max_depth'],
+                                                min_samples_leaf=model['min_samples_leaf'],
+                                                max_features=model['max_features'],
+                                                n_estimators=model['n_estimators'],
+                                                class_weight=model['class_weight'])
 
                 # fit and predict
                 model_ = rf.fit(X_train, y_train[[depvar]])

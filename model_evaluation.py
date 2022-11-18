@@ -139,33 +139,55 @@ class ModelEvaluation:
         :param verbose: boolean, default False, display results during estimation
         :return: pd.DataFrame with all criterions collected
         """
-
-        r2_collected, mae_collected, rmse_collected, evs_collected = {}, {}, {}, {}
+        accuracy_score_collected, f1_score_collected, precision_score_collected, recall_score_collected = {}, {}, {}, {}
 
         for target in self.targets:
-            print(target, len(self._y_tests_collected[target]), len(self._y_preds_collected[target]))
+            # print(target, len(self._y_tests_collected[target]), len(self._y_preds_collected[target]))
 
-            r2_collected[target] = metrics.r2_score(y_true=self._y_tests_collected[target],
-                                                    y_pred=self._y_preds_collected[target])
-            mae_collected[target] = metrics.mean_absolute_error(y_true=self._y_tests_collected[target],
-                                                                y_pred=self._y_preds_collected[target])
-            rmse_collected[target] = metrics.mean_squared_error(y_true=self._y_tests_collected[target],
-                                                                y_pred=self._y_preds_collected[target], squared=False)
-            evs_collected[target] = metrics.explained_variance_score(y_true=self._y_tests_collected[target],
-                                                                     y_pred=self._y_preds_collected[target])
+            accuracy_score_collected[target] = metrics.accuracy_score(y_true=self._y_tests_collected[target],
+                                                                      y_pred=self._y_preds_collected[target])
+            f1_score_collected[target] = metrics.f1_score(y_true=self._y_tests_collected[target],
+                                                          y_pred=self._y_preds_collected[target])
+            precision_score_collected[target] = metrics.precision_score(y_true=self._y_tests_collected[target],
+                                                                        y_pred=self._y_preds_collected[target])
+            recall_score_collected[target] = metrics.recall_score(y_true=self._y_tests_collected[target],
+                                                                  y_pred=self._y_preds_collected[target])
+
             if verbose:
                 print(f"{target}")
-                print(f"r2: {round(r2_collected[target], 2)}")
-                print(f"mae: {round(mae_collected[target], 2)}")
-                print(f"rmse: {round(rmse_collected[target], 2)}")
-                print(f"evs: {round(evs_collected[target], 2)}")
+                print(f"score: {round(accuracy_score_collected[target], 2)}")
+                print(f"f1 score: {round(f1_score_collected[target], 2)}")
+                print(f"precision_score: {round(precision_score_collected[target], 2)}")
+                print(f"recall_score: {round(recall_score_collected[target], 2)}")
 
         df = pd.DataFrame([], columns=["criterion"]+self.targets)
-        for i, df_metrics in enumerate([r2_collected, mae_collected, rmse_collected, evs_collected]):
+        for i, df_metrics in enumerate([accuracy_score_collected, f1_score_collected, precision_score_collected,
+                                        recall_score_collected]):
             df_metrics['criterion'] = [k.split("_")[0] for k, v in locals().items() if v is df_metrics][0]
             df = df.append(pd.DataFrame(df_metrics, index=[i]))
 
         return df
+
+        # r2_collected, mae_collected, rmse_collected, evs_collected = {}, {}, {}, {}
+        #
+        # for target in self.targets:
+        #     print(target, len(self._y_tests_collected[target]), len(self._y_preds_collected[target]))
+        #
+        # r2_collected[target] = metrics.r2_score(y_true=self._y_tests_collected[target],
+        #                                         y_pred=self._y_preds_collected[target])
+        # mae_collected[target] = metrics.mean_absolute_error(y_true=self._y_tests_collected[target],
+        #                                                     y_pred=self._y_preds_collected[target])
+        # rmse_collected[target] = metrics.mean_squared_error(y_true=self._y_tests_collected[target],
+        #                                                     y_pred=self._y_preds_collected[target], squared=False)
+        # evs_collected[target] = metrics.explained_variance_score(y_true=self._y_tests_collected[target],
+        #                                                          y_pred=self._y_preds_collected[target])
+        # Return the mean accuracy on the given test data and labels.
+        # if verbose:
+        #     print(f"{target}")
+            # print(f"r2: {round(r2_collected[target], 2)}")
+            # print(f"mae: {round(mae_collected[target], 2)}")
+            # print(f"rmse: {round(rmse_collected[target], 2)}")
+            # print(f"evs: {round(evs_collected[target], 2)}")
 
     def violin_plots(self, filepath=None):
 
