@@ -28,7 +28,7 @@ Specify # of selected feature_sets and dependent var
 # TEST
 # i_ = 0
 # feat_set_ = "feature_set_2"
-# depvar = targets[0]
+# target = targets[0]
 
 if __name__ == "__main__":
 
@@ -59,17 +59,17 @@ if __name__ == "__main__":
         Iterate over each trait and estimate and predict model
         """
 
-        for depvar in targets:
+        for target in targets:
 
-            print(f"{feat_set_} {depvar}")
+            print(f"{feat_set_} {target}")
             feature_set_ = feature_sets[feat_set_]
 
             model_specs_ = extract_model_specification(method=model['method'],
                                                        selected_feature_set=feat_set_,
-                                                       depvar=depvar)
+                                                       target=target)
 
-            y_tests_collected[depvar] = y_test[[depvar]]
-            y_trains_collected[depvar] = y_train[[depvar]]
+            y_tests_collected[target] = y_test[[target]]
+            y_trains_collected[target] = y_train[[target]]
 
             model_ = None
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
                 # and C that correspond to the best scores across folds are averaged.
 
                 # fit the model with data
-                model_.fit(X_train, y_train[[depvar]])
+                model_.fit(X_train, y_train[[target]])
 
             """
             Evaluate models
@@ -110,7 +110,7 @@ if __name__ == "__main__":
                     set_model_params(best_params=model_.best_params_, model=model)
                     model_specs_ = extract_model_specification(method=model['method'],
                                                                selected_feature_set=feat_set_,
-                                                               depvar=depvar)
+                                                               target=target)
                 else:
                     rf = RandomForestClassifier(min_samples_split=model['min_samples_split'],
                                                 max_depth=model['max_depth'],
@@ -120,15 +120,15 @@ if __name__ == "__main__":
                                                 class_weight=model['class_weight'])
 
                 # fit and predict
-                model_ = rf.fit(X_train, y_train[[depvar]])
+                model_ = rf.fit(X_train, y_train[[target]])
                 y_pred = model_.predict(X_test)
 
-                # collect all for this iteration depvar
-                models_collected[depvar] = model_
-                model_specs_collected[depvar] = extract_model_specification(method=model['method'],
+                # collect all for this iteration target
+                models_collected[target] = model_
+                model_specs_collected[target] = extract_model_specification(method=model['method'],
                                                                             selected_feature_set=feat_set_,
-                                                                            depvar=depvar)
-                y_preds_collected[depvar] = [round(x) for x in y_pred]
+                                                                            target=target)
+                y_preds_collected[target] = [round(x) for x in y_pred]
 
         """
         Model Evaluations
@@ -148,6 +148,8 @@ if __name__ == "__main__":
 
         df_feat_importances = model_eval_results.get_feature_importances(filepath=graphs_path)
         df_critereons = model_eval_results.criterions(verbose=True)
+        df_cnf_matrix_measures = model_eval_results.get_confusion_matrix(filepath=graphs_path, verbose=True)
+        model_eval_results.roc_curve(filepath=graphs_path)
         # model_eval_results.violin_plots(filepath=graphs_path)
         # model_eval_results.boxplots(filepath=graphs_path)
 
@@ -157,6 +159,8 @@ if __name__ == "__main__":
 
         store_results(df=df_feat_importances, filename="feature_importances", filepath=tables_path)
         store_results(df=df_critereons, filename="criterions", filepath=tables_path, model_specs=model_specs_collected)
+        store_results(df=df_cnf_matrix_measures, filename="cnf_matrix", filepath=tables_path,
+                      model_specs=model_specs_collected)
 
         endtime = time.time()
         print("time:", round(endtime - starttime, 2), "seconds")

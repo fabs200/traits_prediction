@@ -12,7 +12,7 @@ from features_sets import feature_names_nicely
 class ModelEvaluation:
     def __init__(self, X_train=None, X_test=None, y_trains_collected=None, y_tests_collected=None,
                  targets=None, models_collected=None, model_specs_collected=None, y_preds_collected=None,
-                 model_method='randomforest', plot=True, save_plot=True):
+                 model_method='randomforest', plot=True, save_plot=True, graph_format=".png"):
         self._X_train = X_train
         self._X_test = X_test
         self._y_trains_collected = y_trains_collected
@@ -24,6 +24,7 @@ class ModelEvaluation:
         self._model_method = model_method
         self._plot = plot
         self._save_plot = save_plot
+        self._graph_format = graph_format
 
     def X_train(self):
         return self._X_train
@@ -68,6 +69,10 @@ class ModelEvaluation:
     def save_plot(self):
         return self._save_plot
 
+    @property
+    def graph_format(self):
+        return self._graph_format
+
     def get_feature_importances(self, filepath=None) -> pd.DataFrame:
 
         importances_collected = {}
@@ -76,14 +81,14 @@ class ModelEvaluation:
         if self._model_method == 'logistic':
             for i, target in enumerate(self._targets):
                 importances = self.models_collected[i].coef_[0]
-                curr_model_ = self._model_specs_collected[i]
+                filename_ = f"{target}_{self._model_specs_collected[i]}{self._graph_format}"
                 feat_importances = pd.Series(importances, index=self._X_test.columns)
                 if self._plot:
                     feat_importances.nlargest(10).sort_values(ascending=True)\
                         .plot(kind='barh', title='Feature Importance')
                     plt.tight_layout()
                     if self._save_plot:
-                        plt.savefig(filepath + f'feat_importance_{curr_model_}.png')
+                        plt.savefig(filepath + f'featimp_{filename_}')
                     plt.show()
                 importances_collected[target] = importances
 
@@ -91,7 +96,7 @@ class ModelEvaluation:
                 df_feat_importance_curr = pd.DataFrame(feat_importances, columns=["importance"])
                 df_feat_importance_curr['feature'] = df_feat_importance_curr.index
                 df_feat_importance_curr['target'] = target
-                df_feat_importance_curr['model'] = curr_model_
+                df_feat_importance_curr['model'] = {self._model_specs_collected[i]}
 
                 # collect dfs
                 df_feat_importances_collected = df_feat_importances_collected.append(df_feat_importance_curr,
@@ -100,7 +105,7 @@ class ModelEvaluation:
         else:
             for i, target in enumerate(self._targets):
                 importances = self.models_collected[target].feature_importances_
-                curr_model_ = self.model_specs_collected[target]
+                filename_ = f"{target}_{self.model_specs_collected[target]}{self._graph_format}"
                 # std = np.std([tree.feature_importances_ for tree in model_.estimators_], axis=0)
                 # feat_importances = pd.Series(importances, index=model_.feature_names_in_)
                 feat_importances = pd.Series(importances,
@@ -115,7 +120,7 @@ class ModelEvaluation:
                     # plt.rcParams["figure.figsize"] = set_figsize(len(model_.feature_importances_))
                     plt.tight_layout()
                     if self._save_plot:
-                        plt.savefig(filepath + f'feat_importance_{curr_model_}.png')
+                        plt.savefig(filepath + f'featimp_{filename_}')
                     plt.show()
 
                     # set back to default figsize
@@ -125,7 +130,7 @@ class ModelEvaluation:
                 df_feat_importance_curr = pd.DataFrame(feat_importances, columns=["importance"])
                 df_feat_importance_curr['feature'] = df_feat_importance_curr.index
                 df_feat_importance_curr['target'] = target
-                df_feat_importance_curr['model'] = curr_model_
+                df_feat_importance_curr['model'] = self.model_specs_collected[target]
 
                 # collect dfs
                 df_feat_importances_collected = df_feat_importances_collected.append(df_feat_importance_curr,
@@ -136,10 +141,12 @@ class ModelEvaluation:
     def criterions(self, verbose=False) -> pd.DataFrame:
         """
         https://scikit-learn.org/stable/modules/model_evaluation.html#regression-metrics
+        https://scikit-learn.org/stable/modules/model_evaluation.html#classification-metrics
         :param verbose: boolean, default False, display results during estimation
         :return: pd.DataFrame with all criterions collected
         """
-        accuracy_score_collected, f1_score_collected, precision_score_collected, recall_score_collected = {}, {}, {}, {}
+        accuracy_score_collected, f1_score_collected, precision_score_collected, recall_score_collected, \
+            roc_auc_score_collected = {}, {}, {}, {}, {}
 
         for target in self.targets:
             # print(target, len(self._y_tests_collected[target]), len(self._y_preds_collected[target]))
@@ -152,6 +159,8 @@ class ModelEvaluation:
                                                                         y_pred=self._y_preds_collected[target])
             recall_score_collected[target] = metrics.recall_score(y_true=self._y_tests_collected[target],
                                                                   y_pred=self._y_preds_collected[target])
+            roc_auc_score_collected[target] = metrics.roc_auc_score(y_true=self._y_tests_collected[target],
+                                                                    y_score=self._y_preds_collected[target])
 
             if verbose:
                 print(f"{target}")
@@ -159,10 +168,11 @@ class ModelEvaluation:
                 print(f"f1 score: {round(f1_score_collected[target], 2)}")
                 print(f"precision_score: {round(precision_score_collected[target], 2)}")
                 print(f"recall_score: {round(recall_score_collected[target], 2)}")
+                print(f"roc_auc_score: {round(roc_auc_score_collected[target], 2)}")
 
         df = pd.DataFrame([], columns=["criterion"]+self.targets)
         for i, df_metrics in enumerate([accuracy_score_collected, f1_score_collected, precision_score_collected,
-                                        recall_score_collected]):
+                                        recall_score_collected, roc_auc_score_collected]):
             df_metrics['criterion'] = [k.split("_")[0] for k, v in locals().items() if v is df_metrics][0]
             df = df.append(pd.DataFrame(df_metrics, index=[i]))
 
@@ -193,6 +203,7 @@ class ModelEvaluation:
 
         # prepare filename and cut out target, as we investigate all violinplots at once
         filename_ = self.model_specs_collected[self.targets[0]].replace(self.targets[0], "")
+        filename_ = f"{filename_}{self._graph_format}"
 
         # prepare y_tests and y_preds, and put together into one df
         df_y_tests_collected = pd.DataFrame.from_dict(self._y_tests_collected)
@@ -213,13 +224,14 @@ class ModelEvaluation:
             plt.xlabel("")
             plt.tight_layout()
             if self._save_plot:
-                plt.savefig(filepath + f'violinplot_{filename_}.png')
+                plt.savefig(filepath + f'violinplot_{filename_}')
             plt.show()
 
     def boxplots(self, filepath=None):
 
         # prepare filename and cut out target, as we investigate all violinplots at once
         filename_ = self.model_specs_collected[self.targets[0]].replace(self.targets[0], "")
+        filename_ = f"{filename_}{self._graph_format}"
 
         # prepare y_tests and y_preds, and put together into one df
         df_y_tests_collected = pd.DataFrame.from_dict(self._y_tests_collected)
@@ -240,75 +252,76 @@ class ModelEvaluation:
             plt.xlabel("")
             plt.tight_layout()
             if self._save_plot:
-                plt.savefig(filepath + f'boxplot_{filename_}.png')
+                plt.savefig(filepath + f'boxplot_{filename_}')
             plt.show()
 
+    def get_confusion_matrix(self, filepath=None, verbose=False):
 
-    @staticmethod
-    def get_confusion_matrix(y_test=None, y_pred=None, plot=True, save_plot=False, filepath=None, verbose=False):
-        cnf_matrix = metrics.confusion_matrix(y_test, y_pred)
+        cnf_matrix_collected, measures_collected = {}, {}
+        df_cnf_matrix_measures = pd.DataFrame([], columns=['tp', 'fn', 'fp', 'tn', 'sensitivity', 'specificity',
+                                                           'accuracy', 'fp_rate', 'fn_rate',
+                                                           'target', 'model'])
 
-        '''
-        <true> diagonal
-        <false> off-diagonal
-        <positive> bottom row
-        <negative> top row    
-        '''
-        tn = cnf_matrix[[0]][0][0]  # top left
-        tp = cnf_matrix[[1]][0][1]  # bottom right
-        fn = cnf_matrix[[0]][0][1]  # top right
-        fp = cnf_matrix[[1]][0][0]  # bottom left
+        for target in self.model_specs_collected.keys():
 
-        measures = {"tp": tp,
-                    "fn": fn,
-                    "fp": fp,
-                    "tn": tn,
-                    "sensitivity": tp/(tp+fn),
-                    "specificity": tn/(tn+fp),
-                    "accuracy": (tp+tn)/(tp+tn+fp+fn),
-                    "fp_rate": fp/(fp+tn),
-                    "fn_rate": fn/(fn+tp)}
+            filename_ = f"confmat_{target}_{self.model_specs_collected[target]}{self.graph_format}"
+            cnf_matrix = metrics.confusion_matrix(self._y_tests_collected[target], self._y_preds_collected[target])
 
-        if verbose is True:
-            print(cnf_matrix)
-            print(measures)
+            '''
+            <true> diagonal
+            <false> off-diagonal
+            <positive> bottom row
+            <negative> top row    
+            '''
+            tn = cnf_matrix[[0]][0][0]  # top left
+            tp = cnf_matrix[[1]][0][1]  # bottom right
+            fn = cnf_matrix[[0]][0][1]  # top right
+            fp = cnf_matrix[[1]][0][0]  # bottom left
 
-        if plot:
-            class_names = [0, 1]  # name  of classes
-            fig, ax = plt.subplots()
-            tick_marks = np.arange(len(class_names))
-            plt.xticks(tick_marks, class_names)
-            plt.yticks(tick_marks, class_names)
-            # create heatmap
-            sns.heatmap(pd.DataFrame(cnf_matrix), annot=True, cmap="YlGnBu", fmt='g')
-            ax.xaxis.set_label_position("top")
-            plt.tight_layout()
-            plt.title('Confusion matrix', y=1.1)
-            plt.ylabel('Actual label')
-            plt.xlabel('Predicted label')
-            plt.tight_layout()
-            if save_plot:
-                plt.savefig(filepath)
-            plt.show()
+            measures = {"tp": tp,
+                        "fn": fn,
+                        "fp": fp,
+                        "tn": tn,
+                        "sensitivity": tp/(tp+fn),
+                        "specificity": tn/(tn+fp),
+                        "accuracy": (tp+tn)/(tp+tn+fp+fn),
+                        "fp_rate": fp/(fp+tn),
+                        "fn_rate": fn/(fn+tp)}
 
-        return cnf_matrix, measures
+            # collect all results and store to df
+            cnf_matrix_collected[target] = cnf_matrix
+            measures_collected[target] = measures
 
-    @staticmethod
-    def get_predicted_probabilities(model_=None, X_test=None, y_test=None, plot=True, save_plot=False, filepath=None):
-        y_pred_proba = model_.predict_proba(X_test)[::, 1]
-        auc = metrics.roc_auc_score(y_test, y_pred_proba)
+            # Store measures to df
+            df_measures_temp = pd.DataFrame(measures, index=[0])
+            df_measures_temp['model'] = self._model_specs_collected[target]
+            df_measures_temp['target'] = target
+            df_cnf_matrix_measures = df_cnf_matrix_measures.append(df_measures_temp)
 
-        print('auc:', auc)
+            if verbose is True:
+                print(target)
+                print(cnf_matrix)
+                print(measures)
 
-        if plot:
-            fpr, tpr, _ = metrics.roc_curve(y_test, y_pred_proba)
-            plt.plot(fpr, tpr, label="data 1, auc=" + str(round(auc, 3)))
-            plt.legend(loc=4)
-            if save_plot:
-                plt.savefig(filepath)
-            plt.show()
+            if self.plot:
+                class_names = [0, 1]  # name of classes
+                fig, ax = plt.subplots()
+                tick_marks = np.arange(len(class_names))
+                plt.xticks(tick_marks, class_names)
+                plt.yticks(tick_marks, class_names)
+                # create heatmap
+                sns.heatmap(pd.DataFrame(cnf_matrix), annot=True, cmap="YlGnBu", fmt='g')
+                ax.xaxis.set_label_position("top")
+                plt.tight_layout()
+                plt.title('Confusion matrix', y=1.1)
+                plt.ylabel('Actual label')
+                plt.xlabel('Predicted label')
+                plt.tight_layout()
+                if self.save_plot:
+                    plt.savefig(f"{filepath}{filename_}")
+                plt.show()
 
-        return y_pred_proba, auc
+        return df_cnf_matrix_measures
 
     # @staticmethod
     # def get_feature_importances(model_method='logistic', model_=None, X_test=None,
@@ -345,33 +358,35 @@ class ModelEvaluation:
     #
     #     return importances, pd.DataFrame(feat_importances, columns=["importance"]).sort_values("importance")
 
-    @staticmethod
-    def get_f1_score(y_test, y_pred, average='macro', verbose=False):
-        f1_score = metrics.f1_score(y_test, y_pred, average=average)
-        if verbose:
-            print(f1_score)
-        return f1_score
+    def roc_curve(self, filepath=None):
 
-    @staticmethod
-    def get_auc_score(X_train=None, y_train=None, X_test=None, y_test=None, y_pred=None, model_=None,
-                      plot=True, save_plot=False, filepath=None):
+        for target in self.model_specs_collected.keys():
 
-        if plot:
-            auc_plot_train = metrics.plot_roc_curve(model_, X_train, y_train)
-            auc_plot_test = metrics.plot_roc_curve(model_, X_test, y_test, ax=auc_plot_train.ax_)
-            auc_plot_test.figure_.suptitle("ROC curve")
-            plt.tight_layout()
-            if save_plot:
-                plt.savefig(filepath)
-            plt.show()
+            filename_ = f"auc_{target}_{self.model_specs_collected[target]}{self.graph_format}"
 
-        y_pred_proba = model_.predict_proba(X_test)[::, 1]
-        auc_score = metrics.roc_auc_score(y_test, y_pred_proba)
+            if self.plot:
+                auc_plot_train = metrics.plot_roc_curve(estimator=self.models_collected[target],
+                                                        X=self._X_train,
+                                                        y=self._y_trains_collected[target],
+                                                        # sample_weight=model['sample_weight']
+                                                        )
+                auc_plot_test = metrics.plot_roc_curve(estimator=self.models_collected[target],
+                                                       X=self._X_test,
+                                                       y=self._y_tests_collected[target],
+                                                       # sample_weight=model['sample_weight']
+                                                       ax=auc_plot_train.ax_)
+                auc_plot_test.figure_.suptitle("ROC curve")
+                plt.tight_layout()
+                if self.save_plot:
+                    plt.savefig(f"{filepath}/{filename_}")
+                plt.show()
 
-        fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred, pos_label=2)
-        # auc_score = metrics.auc(fpr, tpr)
-
-        return fpr, tpr, auc_score
+        #     y_pred_proba = self._models_collected[target].predict_proba(self.X_test)[::, 1]
+        #     auc_score = metrics.roc_auc_score(self._y_tests_collected[target], y_pred_proba)
+        #     fpr, tpr, thresholds = metrics.roc_curve(self._y_tests_collected[target],
+        #                                              self._y_preds_collected[target], pos_label=2)
+        #     auc_score = metrics.auc(fpr, tpr)
+        # return fpr, tpr, auc_score
 
     # @staticmethod
     # def plot_roc_curve(fprs, tprs, plot=True, save_plot=False, filepath=None):
