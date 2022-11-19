@@ -150,6 +150,7 @@ if __name__ == "__main__":
         df_critereons = model_eval_results.criterions(verbose=True)
         df_cnf_matrix_measures = model_eval_results.get_confusion_matrix(filepath=graphs_path, verbose=True)
         model_eval_results.roc_curve(filepath=graphs_path)
+        df_combined_accuracies = model_eval_results.get_combined_accuracies(filepath=graphs_path)
         # model_eval_results.violin_plots(filepath=graphs_path)
         # model_eval_results.boxplots(filepath=graphs_path)
 
@@ -160,6 +161,8 @@ if __name__ == "__main__":
         store_results(df=df_feat_importances, filename="feature_importances", filepath=tables_path)
         store_results(df=df_critereons, filename="criterions", filepath=tables_path, model_specs=model_specs_collected)
         store_results(df=df_cnf_matrix_measures, filename="cnf_matrix", filepath=tables_path,
+                      model_specs=model_specs_collected)
+        store_results(df=df_combined_accuracies, filename="combined_accuracies", filepath=tables_path,
                       model_specs=model_specs_collected)
 
         endtime = time.time()

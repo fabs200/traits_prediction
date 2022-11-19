@@ -5,7 +5,7 @@ import seaborn as sns
 from sklearn.model_selection import StratifiedKFold
 from sklearn import metrics
 import os.path
-from utils import set_figsize
+from utils import set_figsize, color_palette
 from features_sets import feature_names_nicely
 
 
@@ -84,8 +84,9 @@ class ModelEvaluation:
                 filename_ = f"{target}_{self._model_specs_collected[i]}{self._graph_format}"
                 feat_importances = pd.Series(importances, index=self._X_test.columns)
                 if self._plot:
-                    feat_importances.nlargest(10).sort_values(ascending=True)\
-                        .plot(kind='barh', title='Feature Importance')
+                    feat_importances.nlargest(10).sort_values(ascending=True) \
+                        .plot(kind='barh', title='Feature Importance', color=color_palette[0])
+                    plt.xlabel('Mean decreasing in impurity')
                     plt.tight_layout()
                     if self._save_plot:
                         plt.savefig(filepath + f'featimp_{filename_}')
@@ -114,9 +115,11 @@ class ModelEvaluation:
                 if self._plot:
                     feat_importances.nlargest(10).sort_values(ascending=True).plot(kind='barh',
                                                                                    title='Feature Importance',
+                                                                                   color=color_palette[0],
                                                                                    figsize=set_figsize(len(importances))
-                                                                                   # ylabel='Mean decrease in impurity'
+                                                                                   # ylabel='Mean decreasing in impurity'
                                                                                    )
+                    plt.xlabel('Mean decreasing in impurity')
                     # plt.rcParams["figure.figsize"] = set_figsize(len(model_.feature_importances_))
                     plt.tight_layout()
                     if self._save_plot:
@@ -146,7 +149,7 @@ class ModelEvaluation:
         :return: pd.DataFrame with all criterions collected
         """
         accuracy_score_collected, f1_score_collected, precision_score_collected, recall_score_collected, \
-            roc_auc_score_collected = {}, {}, {}, {}, {}
+        roc_auc_score_collected = {}, {}, {}, {}, {}
 
         for target in self.targets:
             # print(target, len(self._y_tests_collected[target]), len(self._y_preds_collected[target]))
@@ -170,7 +173,7 @@ class ModelEvaluation:
                 print(f"recall_score: {round(recall_score_collected[target], 2)}")
                 print(f"roc_auc_score: {round(roc_auc_score_collected[target], 2)}")
 
-        df = pd.DataFrame([], columns=["criterion"]+self.targets)
+        df = pd.DataFrame([], columns=["criterion"] + self.targets)
         for i, df_metrics in enumerate([accuracy_score_collected, f1_score_collected, precision_score_collected,
                                         recall_score_collected, roc_auc_score_collected]):
             df_metrics['criterion'] = [k.split("_")[0] for k, v in locals().items() if v is df_metrics][0]
@@ -194,10 +197,10 @@ class ModelEvaluation:
         # Return the mean accuracy on the given test data and labels.
         # if verbose:
         #     print(f"{target}")
-            # print(f"r2: {round(r2_collected[target], 2)}")
-            # print(f"mae: {round(mae_collected[target], 2)}")
-            # print(f"rmse: {round(rmse_collected[target], 2)}")
-            # print(f"evs: {round(evs_collected[target], 2)}")
+        # print(f"r2: {round(r2_collected[target], 2)}")
+        # print(f"mae: {round(mae_collected[target], 2)}")
+        # print(f"rmse: {round(rmse_collected[target], 2)}")
+        # print(f"evs: {round(evs_collected[target], 2)}")
 
     def violin_plots(self, filepath=None):
 
@@ -219,7 +222,7 @@ class ModelEvaluation:
         # pivot df for plotting
         df = pd.melt(df, id_vars='y', value_vars=[col for col in df.columns if col != "y"])
         if self._plot:
-            g = sns.violinplot(data=df, x="variable", y="value", hue="y")
+            g = sns.violinplot(data=df, x="variable", y="value", hue="y", color=color_palette[0])
             plt.legend(title='')
             plt.xlabel("")
             plt.tight_layout()
@@ -247,7 +250,7 @@ class ModelEvaluation:
         # pivot df for plotting
         df = pd.melt(df, id_vars='y', value_vars=[col for col in df.columns if col != "y"])
         if self._plot:
-            g = sns.boxplot(data=df, x="variable", y="value", hue="y")
+            g = sns.boxplot(data=df, x="variable", y="value", hue="y", color=color_palette[0])
             plt.legend(title='')
             plt.xlabel("")
             plt.tight_layout()
@@ -282,11 +285,11 @@ class ModelEvaluation:
                         "fn": fn,
                         "fp": fp,
                         "tn": tn,
-                        "sensitivity": tp/(tp+fn),
-                        "specificity": tn/(tn+fp),
-                        "accuracy": (tp+tn)/(tp+tn+fp+fn),
-                        "fp_rate": fp/(fp+tn),
-                        "fn_rate": fn/(fn+tp)}
+                        "sensitivity": tp / (tp + fn),
+                        "specificity": tn / (tn + fp),
+                        "accuracy": (tp + tn) / (tp + tn + fp + fn),
+                        "fp_rate": fp / (fp + tn),
+                        "fn_rate": fn / (fn + tp)}
 
             # collect all results and store to df
             cnf_matrix_collected[target] = cnf_matrix
@@ -323,6 +326,42 @@ class ModelEvaluation:
 
         return df_cnf_matrix_measures
 
+    def get_combined_accuracies(self, filepath=None):
+        """
+        this function produces all accuracies, puts them into a df and plots data
+        :param filepath: specify filepath where graph will be saved
+        :return: df, pd.DataFrame with accuracies, targets and model_specs
+        """
+
+        dict_temp = {}
+        accuracy_score_, model_specs_ = [], []
+        filename_ = f"accuracies_{self.model_specs_collected[self.targets[0]]}{self.graph_format}"
+
+        for target in self.targets:
+            accuracy_score_.append(metrics.accuracy_score(y_true=self._y_tests_collected[target],
+                                                          y_pred=self._y_preds_collected[target]))
+            model_specs_.append(self._model_specs_collected[target])
+
+        dict_temp['accuracy_score'] = accuracy_score_
+        dict_temp['target'] = self.targets
+        dict_temp['model_specs'] = model_specs_
+
+        df = pd.DataFrame(dict_temp, columns=['accuracy_score', 'target', 'model_specs'])
+
+        if self.plot:
+            x_pos = range(len(df['target']))
+            targets_ = [t.replace("i_", "") for t in df['target']]
+            plt.bar(x_pos, df['accuracy_score'], color=color_palette[0])
+            # plt.xlabel('behavioral traits')
+            plt.ylabel('accuracy')
+            plt.xticks(x_pos, targets_, rotation=45)
+            plt.tight_layout()
+            if self.save_plot:
+                plt.savefig(f"{filepath}{filename_}")
+            plt.show()
+
+        return df
+
     # @staticmethod
     # def get_feature_importances(model_method='logistic', model_=None, X_test=None,
     #                             plot=True, save_plot=False, filepath=None):
@@ -345,7 +384,7 @@ class ModelEvaluation:
     #             feat_importances.sort_values().plot(kind='barh',
     #                                                 title='Feature Importance',
     #                                                 figsize=set_figsize(len(model_.feature_importances_))
-    #                                                 # ylabel='Mean decrease in impurity'
+    #                                                 # ylabel='Mean decreasing in impurity'
     #                                                 )
     #             # plt.rcParams["figure.figsize"] = set_figsize(len(model_.feature_importances_))
     #             plt.tight_layout()
@@ -369,12 +408,13 @@ class ModelEvaluation:
                                                         X=self._X_train,
                                                         y=self._y_trains_collected[target],
                                                         # sample_weight=model['sample_weight']
-                                                        )
+                                                        color=color_palette[0])
                 auc_plot_test = metrics.plot_roc_curve(estimator=self.models_collected[target],
                                                        X=self._X_test,
                                                        y=self._y_tests_collected[target],
                                                        # sample_weight=model['sample_weight']
-                                                       ax=auc_plot_train.ax_)
+                                                       ax=auc_plot_train.ax_,
+                                                       color=color_palette[1])
                 auc_plot_test.figure_.suptitle("ROC curve")
                 plt.tight_layout()
                 if self.save_plot:
@@ -393,123 +433,123 @@ class ModelEvaluation:
     #     """Plot the Receiver Operating Characteristic from a list
     #     of true positive rates and false positive rates."""
     #
-        # # Initialize useful lists + the plot axes.
-        # global ax
-        # tprs_interp = []
-        # aucs = []
-        # mean_fpr = np.linspace(0, 1, 100)
-        # if plot:
-        #     f, ax = plt.subplots(figsize=(14, 10))
-        #
-        # # Plot ROC for each K-Fold + compute AUC scores.
-        # for i, (fpr, tpr) in enumerate(zip(fprs, tprs)):
-        #     tprs_interp.append(np.interp(mean_fpr, fpr, tpr))
-        #     tprs_interp[-1][0] = 0.0
-        #     roc_auc = metrics.auc(fpr, tpr)
-        #     aucs.append(roc_auc)
-        #     if plot:
-        #         ax.plot(fpr, tpr, lw=1, alpha=0.3,
-        #                 label='ROC fold %d (AUC = %0.2f)' % (i, roc_auc))
-        #
-        # if plot:
-        #     # Plot the luck line.
-        #     plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
-        #              label='Luck', alpha=.8)
-        #
-        # # Plot the mean ROC.
-        # mean_tpr = np.mean(tprs_interp, axis=0)
-        # mean_tpr[-1] = 1.0
-        # mean_auc = metrics.auc(mean_fpr, mean_tpr)
-        # std_auc = np.std(aucs)
-        # if plot:
-        #     ax.plot(mean_fpr, mean_tpr, color='b',
-        #             label=r'Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc),
-        #             lw=2, alpha=.8)
-        #
-        # # Plot the standard deviation around the mean ROC.
-        # std_tpr = np.std(tprs_interp, axis=0)
-        # tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
-        # tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
-        # if plot:
-        #     ax.fill_between(mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=.2,
-        #                     label=r'$\pm$ 1 std. dev.')
-        #
-        #     # Fine tune and show the plot.
-        #     ax.set_xlim([-0.05, 1.05])
-        #     ax.set_ylim([-0.05, 1.05])
-        #     ax.set_xlabel('False Positive Rate')
-        #     ax.set_ylabel('True Positive Rate')
-        #     ax.set_title('Receiver operating characteristic')
-        #     ax.legend(loc="lower right")
-        #     plt.tight_layout()
-        #     if save_plot:
-        #         plt.savefig(filepath)
-        #     plt.show()
-        # # return (f, ax)
-        #
-        # @staticmethod
-        # def compute_roc_auc(index, model_, X, y, plot=True, save_plot=False, filepath=None) -> (list, list, float):
-        #     y_predict = model_.predict_proba(X.iloc[index])[:, 1]
-        #     fprs, tprs, thresholds = metrics.roc_curve(y.iloc[index], y_predict)
-        #     auc_score = metrics.auc(fprs, tprs)
-        #
-        #     if plot:
-        #         # Initialize useful lists + the plot axes.
-        #         global ax
-        #         tprs_interp = []
-        #         aucs = []
-        #         mean_fpr = np.linspace(0, 1, len(fprs))
-        #         if plot:
-        #             f, ax = plt.subplots(figsize=(14, 10))
-        #
-        #         # Plot ROC for each K-Fold + compute AUC scores.
-        #         for i, (fpr, tpr) in enumerate(zip(fprs, tprs)):
-        #             print(i, (fpr, tpr))
-        #             tprs_interp.append(np.interp(mean_fpr, fpr, tpr))
-        #             tprs_interp[-1][0] = 0.0
-        #             roc_auc = metrics.auc(fpr, tpr)
-        #             aucs.append(roc_auc)
-        #             if plot:
-        #                 ax.plot(fpr, tpr, lw=1, alpha=0.3,
-        #                         label='ROC fold %d (AUC = %0.2f)' % (i, roc_auc))
-        #
-        #         if plot:
-        #             # Plot the luck line.
-        #             plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
-        #                      label='Luck', alpha=.8)
-        #
-        #         # Plot the mean ROC.
-        #         mean_tpr = np.mean(tprs_interp, axis=0)
-        #         mean_tpr[-1] = 1.0
-        #         mean_auc = metrics.auc(mean_fpr, mean_tpr)
-        #         std_auc = np.std(aucs)
-        #         if plot:
-        #             ax.plot(mean_fpr, mean_tpr, color='b',
-        #                     label=r'Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc),
-        #                     lw=2, alpha=.8)
-        #
-        #         # Plot the standard deviation around the mean ROC.
-        #         std_tpr = np.std(tprs_interp, axis=0)
-        #         tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
-        #         tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
-        #         if plot:
-        #             ax.fill_between(mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=.2,
-        #                             label=r'$\pm$ 1 std. dev.')
-        #
-        #             # Fine tune and show the plot.
-        #             ax.set_xlim([-0.05, 1.05])
-        #             ax.set_ylim([-0.05, 1.05])
-        #             ax.set_xlabel('False Positive Rate')
-        #             ax.set_ylabel('True Positive Rate')
-        #             ax.set_title('Receiver operating characteristic')
-        #             ax.legend(loc="lower right")
-        #             plt.tight_layout()
-        #             if save_plot:
-        #                 plt.savefig(filepath)
-        #             plt.show()
-        #         # return (f, ax)
-        #
-        #     return fpr, tpr, auc_score
+    # # Initialize useful lists + the plot axes.
+    # global ax
+    # tprs_interp = []
+    # aucs = []
+    # mean_fpr = np.linspace(0, 1, 100)
+    # if plot:
+    #     f, ax = plt.subplots(figsize=(14, 10))
+    #
+    # # Plot ROC for each K-Fold + compute AUC scores.
+    # for i, (fpr, tpr) in enumerate(zip(fprs, tprs)):
+    #     tprs_interp.append(np.interp(mean_fpr, fpr, tpr))
+    #     tprs_interp[-1][0] = 0.0
+    #     roc_auc = metrics.auc(fpr, tpr)
+    #     aucs.append(roc_auc)
+    #     if plot:
+    #         ax.plot(fpr, tpr, lw=1, alpha=0.3,
+    #                 label='ROC fold %d (AUC = %0.2f)' % (i, roc_auc))
+    #
+    # if plot:
+    #     # Plot the luck line.
+    #     plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
+    #              label='Luck', alpha=.8)
+    #
+    # # Plot the mean ROC.
+    # mean_tpr = np.mean(tprs_interp, axis=0)
+    # mean_tpr[-1] = 1.0
+    # mean_auc = metrics.auc(mean_fpr, mean_tpr)
+    # std_auc = np.std(aucs)
+    # if plot:
+    #     ax.plot(mean_fpr, mean_tpr, color='b',
+    #             label=r'Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc),
+    #             lw=2, alpha=.8)
+    #
+    # # Plot the standard deviation around the mean ROC.
+    # std_tpr = np.std(tprs_interp, axis=0)
+    # tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
+    # tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
+    # if plot:
+    #     ax.fill_between(mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=.2,
+    #                     label=r'$\pm$ 1 std. dev.')
+    #
+    #     # Fine tune and show the plot.
+    #     ax.set_xlim([-0.05, 1.05])
+    #     ax.set_ylim([-0.05, 1.05])
+    #     ax.set_xlabel('False Positive Rate')
+    #     ax.set_ylabel('True Positive Rate')
+    #     ax.set_title('Receiver operating characteristic')
+    #     ax.legend(loc="lower right")
+    #     plt.tight_layout()
+    #     if save_plot:
+    #         plt.savefig(filepath)
+    #     plt.show()
+    # # return (f, ax)
+    #
+    # @staticmethod
+    # def compute_roc_auc(index, model_, X, y, plot=True, save_plot=False, filepath=None) -> (list, list, float):
+    #     y_predict = model_.predict_proba(X.iloc[index])[:, 1]
+    #     fprs, tprs, thresholds = metrics.roc_curve(y.iloc[index], y_predict)
+    #     auc_score = metrics.auc(fprs, tprs)
+    #
+    #     if plot:
+    #         # Initialize useful lists + the plot axes.
+    #         global ax
+    #         tprs_interp = []
+    #         aucs = []
+    #         mean_fpr = np.linspace(0, 1, len(fprs))
+    #         if plot:
+    #             f, ax = plt.subplots(figsize=(14, 10))
+    #
+    #         # Plot ROC for each K-Fold + compute AUC scores.
+    #         for i, (fpr, tpr) in enumerate(zip(fprs, tprs)):
+    #             print(i, (fpr, tpr))
+    #             tprs_interp.append(np.interp(mean_fpr, fpr, tpr))
+    #             tprs_interp[-1][0] = 0.0
+    #             roc_auc = metrics.auc(fpr, tpr)
+    #             aucs.append(roc_auc)
+    #             if plot:
+    #                 ax.plot(fpr, tpr, lw=1, alpha=0.3,
+    #                         label='ROC fold %d (AUC = %0.2f)' % (i, roc_auc))
+    #
+    #         if plot:
+    #             # Plot the luck line.
+    #             plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
+    #                      label='Luck', alpha=.8)
+    #
+    #         # Plot the mean ROC.
+    #         mean_tpr = np.mean(tprs_interp, axis=0)
+    #         mean_tpr[-1] = 1.0
+    #         mean_auc = metrics.auc(mean_fpr, mean_tpr)
+    #         std_auc = np.std(aucs)
+    #         if plot:
+    #             ax.plot(mean_fpr, mean_tpr, color='b',
+    #                     label=r'Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc),
+    #                     lw=2, alpha=.8)
+    #
+    #         # Plot the standard deviation around the mean ROC.
+    #         std_tpr = np.std(tprs_interp, axis=0)
+    #         tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
+    #         tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
+    #         if plot:
+    #             ax.fill_between(mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=.2,
+    #                             label=r'$\pm$ 1 std. dev.')
+    #
+    #             # Fine tune and show the plot.
+    #             ax.set_xlim([-0.05, 1.05])
+    #             ax.set_ylim([-0.05, 1.05])
+    #             ax.set_xlabel('False Positive Rate')
+    #             ax.set_ylabel('True Positive Rate')
+    #             ax.set_title('Receiver operating characteristic')
+    #             ax.legend(loc="lower right")
+    #             plt.tight_layout()
+    #             if save_plot:
+    #                 plt.savefig(filepath)
+    #             plt.show()
+    #         # return (f, ax)
+    #
+    #     return fpr, tpr, auc_score
 
     @staticmethod
     def get_auc_scores_random_forest_CV(cv=5, X=None, y=None, clf=None):

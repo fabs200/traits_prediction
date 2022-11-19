@@ -2,6 +2,8 @@ import os
 import pandas as pd
 from config import model
 
+color_palette = ['dodgerblue', 'gold', 'coral', 'mediumslateblue', 'darkorange', 'darkgray']
+
 
 def store_results(df=None, filepath=None, filename=None, model_specs=None):
 

@@ -1,11 +1,40 @@
+import getpass
 from features_sets import *
 
-project_path = "/Users/fabiannemeczek/Library/CloudStorage/OneDrive-Persönlich/Projekt/Traits_PSD2_Prediction/"
+
+"""
+Paths
+"""
+
+project_path = None
+if getpass.getuser() == 'fabiannemeczek':
+    project_path = "/Users/fabiannemeczek/Library/CloudStorage/OneDrive-Persönlich/Projekt/Traits_PSD2_Prediction/"
+    external_data_path = '/Users/fabiannemeczek/Dropbox/MPC_BIG5/4_data/databricks'
 graphs_path = project_path + "out/graphs/prediction/"
 tables_path = project_path + "out/tables/prediction/"
-external_data_path = '/Users/fabiannemeczek/Dropbox/MPC_BIG5/4_data/databricks'
+
+"""
+feature sets
+"""
+
+feature_sets = {
+    'feature_set_1': consumption_features,
+    'feature_set_2': consumption_features + financial_account_features,
+    'feature_set_3': consumption_features + demographics_features,
+    'feature_set_4': consumption_features + financial_account_features + demographics_features,
+    'feature_set_5': consumption_subcategories + demographics_features
+}
+
+
+"""
+Model parameter
+"""
 
 model = {
+
+    'drop_consumption_vars_at_pct': .9,  # drop consumption vars if 90% are missing,
+                                         # such as in Gladstone, Matz, Lemaire (2019)
+
     'method': 'randomforest',  # randomforest OR logistic
 
     'test_size': 0.3,  # test size
@@ -19,7 +48,7 @@ model = {
     'solver': 'liblinear',  # liblinear solver for small sample sizes
     'penalty': 'l2',  # penalty to reduce overfitting, default l2 (l1 shrinks down coef to zero if not important)
 
-    ### random forest
+    ### random forest classification
     'do_grid_search': False,  # True if do a grid search and select best_params_, otherwise below params are chosen
 
     'min_samples_split': 0.1,  # e.g. 0.1 = 10% or 10 = 10 obs, default 2
@@ -29,6 +58,7 @@ model = {
     'n_estimators': 500,  # number of trees
     'class_weight': "balanced"  # default: None, class weights e.g. y={0, 1} -> weights={1:10}
 
+    ### random forest regression
     # 'min_samples_split': 5,  # e.g. 0.1 = 10% or 10 = 10 obs, default 2
     # 'max_depth': 15,  # max depth of tree, # nodes, default None
     # 'min_samples_leaf': 10,  # The minimum number of samples required to be at a leaf node, default 1
@@ -38,6 +68,7 @@ model = {
     #                               # than or equal to this value.
 }
 
+### random forest classification
 random_forest_param_grid = {
     'bootstrap': [False],
     'max_depth': [5, 8, 10, 12, 15],
@@ -46,6 +77,8 @@ random_forest_param_grid = {
     'min_samples_split': [0.05, 0.1, 0.15, 0.2],
     'n_estimators': [200, 300, 500]
 }
+
+### random forest regression
 # random_forest_param_grid = {
 #     'bootstrap': [False],
 #     'max_depth': [10],  #[5, 8, 10, 12, 15],
@@ -54,11 +87,3 @@ random_forest_param_grid = {
 #     'min_samples_split': [0.1],  #[0.05, 0.1, 0.15, 0.2],
 #     'n_estimators': [200],  #[200, 300, 500]
 # }
-
-feature_sets = {
-    'feature_set_1': consumption_features,
-    'feature_set_2': consumption_features + financial_account_features,
-    'feature_set_3': consumption_features + demographics_features,
-    'feature_set_4': consumption_features + financial_account_features + demographics_features,
-    'feature_set_5': consumption_subcategories + demographics_features
-}
