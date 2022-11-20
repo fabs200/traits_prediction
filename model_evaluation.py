@@ -1,13 +1,15 @@
-import matplotlib.pyplot as plt
+import os
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import matplotlib.pyplot as plt
 from sklearn.model_selection import StratifiedKFold
 from sklearn import metrics
-import os.path
-from utils import set_figsize, color_palette
+from utils import set_figsize, color_palette, corrmat_with_pval
 from features_sets import feature_names_nicely
 
+sns.set(style="whitegrid")
+sns.set_palette(palette=color_palette)
 
 class ModelEvaluation:
     def __init__(self, X_train=None, X_test=None, y_trains_collected=None, y_tests_collected=None,
@@ -303,7 +305,7 @@ class ModelEvaluation:
 
             if verbose is True:
                 print(target)
-                print(cnf_matrix)
+                # print(cnf_matrix)
                 print(measures)
 
             if self.plot:
@@ -337,6 +339,10 @@ class ModelEvaluation:
         accuracy_score_, model_specs_ = [], []
         filename_ = f"accuracies_{self.model_specs_collected[self.targets[0]]}{self.graph_format}"
 
+        # drop feature-set <nbr> from model spec string
+        model_temp_ = self._model_specs_collected[self.targets[0]].split("_")
+        model_spec_ = "_".join([j for i, j in enumerate(model_temp_) if i not in [2, 3]])
+
         for target in self.targets:
             accuracy_score_.append(metrics.accuracy_score(y_true=self._y_tests_collected[target],
                                                           y_pred=self._y_preds_collected[target]))
@@ -344,7 +350,7 @@ class ModelEvaluation:
 
         dict_temp['accuracy_score'] = accuracy_score_
         dict_temp['target'] = self.targets
-        dict_temp['model_specs'] = model_specs_
+        dict_temp['model_specs'] = model_spec_
 
         df = pd.DataFrame(dict_temp, columns=['accuracy_score', 'target', 'model_specs'])
 
@@ -566,3 +572,95 @@ class ModelEvaluation:
             auc_scores.append(auc_score)
 
         return auc_scores
+
+    def plot_combined_accuracies(self, load_from_tables_path=None, filepath=None):
+        """
+        this function gathers all accuracies of all traits and all feature_sets and plots them altogether.
+        :param load_from_tables_path: table_path where table is saved to from get_combined_accuracies()
+        :param filepath: path where plot will be saved to
+        :return: None
+        """
+
+        # select model, drop "set_*_"
+        model_temp_ = self._model_specs_collected[self.targets[0]].split("_")
+        model_ = "_".join([j for i, j in enumerate(model_temp_) if i not in [2, 3]])
+        filename_ = f"combined_accuracies_{model_}{self.graph_format}"
+
+        # read in accuracies and select current model_specs
+        df = pd.read_excel(f"{load_from_tables_path}combined_accuracies.xlsx")
+        df = df[df['model_specs'] == model_]
+
+        # extract feature sets from model
+        df['feature_set'] = df['model'].str.replace('_'.join(model_.split("_")[:2]), '')
+        df['feature_set'] = df['feature_set'].str.replace('_'.join(model_.split("_")[2:]), '')
+        df['feature_set'] = 'feature' + df['feature_set'].str[:-1]
+        df['feature_set'] = df['feature_set'].str.replace("_", " ")
+        df['target'] = df['target'].str.replace('i_', '')
+
+        # Draw a nested barplot to show survival for class and sex
+        sns.catplot(x="target", y="accuracy_score", hue="feature_set", data=df, kind="bar")
+        plt.ylabel("accuracy score")
+        plt.xlabel("")
+        plt.xticks(rotation=45)
+        plt.legend("", bbox_to_anchor=(1.3, 1.0), loc='upper left')
+        plt.tight_layout()
+        plt.savefig(f"{filepath}/{filename_}")
+        plt.show()
+
+    def correlations_between_traits(self, filepath=None, filename=None):
+        """
+        this function generates an excel sheet with all behavioral traits correlated with each other
+        :param filename: str, specify file name
+        :param filepath: str, specify where excel sheet should be saved to
+        :return: None
+        """
+
+        y_tests_dict = {}
+        for t in self.y_tests_collected.keys():
+            y_tests_dict[t] = self.y_tests_collected[t].reset_index()[t].to_list()
+
+        y_trains_dict = {}
+        for t in self.y_trains_collected.keys():
+            y_trains_dict[t] = self.y_trains_collected[t].reset_index()[t].to_list()
+
+        df_y_tests_collected = pd.DataFrame(y_tests_dict)
+        df_y_trains_collected = pd.DataFrame(y_trains_dict)
+        df_actual_behavioral_traits = df_y_trains_collected.append(df_y_tests_collected)
+
+        # correlate actual behavioral traits among each other
+        # (self.y_trains_collected+self.y_tests_collected)
+        df_actual_behavioral_traits_corr = corrmat_with_pval(df_actual_behavioral_traits)
+
+        # correlate predicted behavioral traits among each other (self.y_preds_collected)
+        df_y_preds_collected = pd.DataFrame(self._y_preds_collected)
+        df_y_preds_collected_corr = corrmat_with_pval(df_y_preds_collected)
+
+        # correlate predicted vs. actual behavioral traits among each other
+        # (self.y_preds_collected['i_risk'] vs self.y_tests_collected['i_risk'])
+
+        df_y_preds_collected.columns = ['predicted_' + col for col in df_y_preds_collected.columns]
+        df_y_tests_collected.columns = ['actual_' + col for col in df_y_tests_collected.columns]
+        df_predicted_vs_actual = pd.merge(df_y_preds_collected, df_y_tests_collected, left_index=True, right_index=True)
+        df_predicted_vs_actual_corr = corrmat_with_pval(df_predicted_vs_actual)
+
+        results = {
+            "actual_behavioral_traits": df_actual_behavioral_traits_corr,
+            "y_preds_collected": df_y_preds_collected_corr,
+            "predicted_vs_actual": df_predicted_vs_actual_corr
+        }
+
+        """
+        Store results to Excel
+        """
+
+        filename_ = f"{filename}.xlsx"
+
+        # if not exists, create empty Excel file
+        if not os.path.exists(filepath + filename_):
+            writer = pd.ExcelWriter(filepath + filename_, engine='xlsxwriter')
+            writer.save()
+        # loop over each correlation matrix and append to new sheet in Excel file
+        for res in results:
+            with pd.ExcelWriter(filepath + filename_, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
+                results[res].to_excel(writer, res, index=True)
+        print(f"{filename_} stored to {filepath}")

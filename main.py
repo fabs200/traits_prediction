@@ -165,5 +165,11 @@ if __name__ == "__main__":
         store_results(df=df_combined_accuracies, filename="combined_accuracies", filepath=tables_path,
                       model_specs=model_specs_collected)
 
-        endtime = time.time()
-        print("time:", round(endtime - starttime, 2), "seconds")
+    # plot accuracies of all feature sets and targets
+    model_eval_results.plot_combined_accuracies(filepath=graphs_path, load_from_tables_path=tables_path)
+
+    # correlations between behavioral traits
+    model_eval_results.correlations_between_traits(filepath=tables_path, filename="correlations_traits")
+
+    endtime = time.time()
+    print("time:", round(endtime - starttime, 2), "seconds")

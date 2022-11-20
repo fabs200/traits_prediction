@@ -10,8 +10,8 @@ project_path = None
 if getpass.getuser() == 'fabiannemeczek':
     project_path = "/Users/fabiannemeczek/Library/CloudStorage/OneDrive-Persönlich/Projekt/Traits_PSD2_Prediction/"
     external_data_path = '/Users/fabiannemeczek/Dropbox/MPC_BIG5/4_data/databricks'
-graphs_path = project_path + "out/graphs/prediction/"
-tables_path = project_path + "out/tables/prediction/"
+graphs_path = project_path + "out/graphs/"
+tables_path = project_path + "out/tables/"
 
 """
 feature sets
@@ -19,10 +19,10 @@ feature sets
 
 feature_sets = {
     'feature_set_1': consumption_features,
-    'feature_set_2': consumption_features + financial_account_features,
-    'feature_set_3': consumption_features + demographics_features,
-    'feature_set_4': consumption_features + financial_account_features + demographics_features,
-    'feature_set_5': consumption_subcategories + demographics_features
+    # 'feature_set_2': consumption_features + financial_account_features,
+    # 'feature_set_3': consumption_features + demographics_features,
+    # 'feature_set_4': consumption_features + financial_account_features + demographics_features,
+    # 'feature_set_5': consumption_subcategories + demographics_features
 }
 
 

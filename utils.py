@@ -76,3 +76,19 @@ def set_figsize(number_features=None):
 def set_model_params(best_params: dict, model: dict):
     for param in best_params:
         model[param] = best_params[param]
+
+from scipy.stats import pearsonr
+import numpy as np
+
+def corrmat_with_pval(df=None):
+    """
+    returns df correlation matrix with p-values
+    https://stackoverflow.com/questions/25571882/pandas-columns-correlation-with-statistical-significance
+    :param df: specify pandas.DataFrame
+    :return: df with p-vals
+    """
+    rho = df.corr()
+    pval = df.corr(method=lambda x, y: pearsonr(x, y)[1]) - np.eye(*rho.shape)
+    p = pval.applymap(lambda x: ''.join(['*' for t in [.05, .01, .001] if x <= t]))
+    return rho.round(2).astype(str) + p
+
