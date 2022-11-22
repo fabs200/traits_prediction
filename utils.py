@@ -1,6 +1,10 @@
 import os
 import pandas as pd
+import numpy as np
+from scipy.stats import pearsonr
+
 from config import model
+
 
 color_palette = ['dodgerblue', 'gold', 'coral', 'mediumslateblue', 'darkorange', 'darkgray']
 
@@ -77,8 +81,6 @@ def set_model_params(best_params: dict, model: dict):
     for param in best_params:
         model[param] = best_params[param]
 
-from scipy.stats import pearsonr
-import numpy as np
 
 def corrmat_with_pval(df=None):
     """
@@ -92,3 +94,43 @@ def corrmat_with_pval(df=None):
     p = pval.applymap(lambda x: ''.join(['*' for t in [.05, .01, .001] if x <= t]))
     return rho.round(2).astype(str) + p
 
+
+def store_grid_search_params(random_forest_param_grid=dict,
+                             gridsearch_model_specs_collected=dict,
+                             feature_set=None,
+                             filepath=None, filename=None):
+
+    # write grid search values to df
+    df = pd.DataFrame(gridsearch_model_specs_collected)
+    df['params'] = df.index
+    df['feature_set'] = feature_set
+    # put params, feature_set as first columns
+    for i, var in enumerate(['params', 'feature_set']):
+        column_ = df.pop(var)
+        # insert column using insert(position,column_name, first_column) function
+        df.insert(i, var, column_)
+
+    for param in random_forest_param_grid:
+        df[f"gridsearch_{param}"] = str(random_forest_param_grid[param])
+
+    filename_ = f"{filename}.xlsx"
+    sheet_name_ = f"{filename}"
+    cols_ = df.columns
+
+    # if not exists, create empty Excel sheet
+    if not os.path.exists(filepath + filename_):
+        writer = pd.ExcelWriter(filepath+filename_, engine='xlsxwriter')
+        writer.save()
+        pd.DataFrame([], columns=cols_).to_excel(
+            filepath+filename_, sheet_name=sheet_name_, index=False
+        )
+        print("new file created!")
+
+    df_full = pd.read_excel(filepath+filename_, sheet_name=sheet_name_)
+    df_full = df_full.dropna()
+    df_full = pd.DataFrame(df_full, columns=cols_)
+
+    df_full = df_full.append(df, ignore_index=True)
+    df_full = df_full.drop_duplicates().dropna(how='all')
+    df_full.to_excel(filepath+filename_, header=1, sheet_name=sheet_name_, index=False)
+    print(f"{filename_} stored to {filepath}")

@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from config import model, feature_sets, random_forest_param_grid, tables_path, graphs_path
 from load_data import df_prep
 from model_evaluation import ModelEvaluation
-from utils import store_results, extract_model_specification, set_model_params
+from utils import store_results, extract_model_specification, set_model_params, store_grid_search_params
 from targets import behavioral_traits, targets
 
 # capture warnings
@@ -40,6 +40,7 @@ if __name__ == "__main__":
         y_trains_collected = {}
         models_collected = {}
         model_specs_collected = {}
+        gridsearch_model_specs_collected = {}
 
         # set dataframe, X, y
         df = df_prep[feature_sets[feat_set_] + targets]
@@ -83,9 +84,9 @@ if __name__ == "__main__":
                                               solver=model['solver'],
                                               penalty=model['penalty']
                                               )
-                # If set to True, the scores are averaged across all folds, and the coefs and the C that corresponds to the
-                # best score is taken, and a final refit is done using these parameters. Otherwise the coefs, intercepts
-                # and C that correspond to the best scores across folds are averaged.
+                # If set to True, the scores are averaged across all folds, and the coefs and the C that corresponds to
+                # the best score is taken, and a final refit is done using these parameters. Otherwise, the coefs,
+                # intercepts and C that correspond to the best scores across folds are averaged.
 
                 # fit the model with data
                 model_.fit(X_train, y_train[[target]])
@@ -101,13 +102,15 @@ if __name__ == "__main__":
                     model_ = GridSearchCV(estimator=RandomForestClassifier(),
                                           param_grid=random_forest_param_grid,
                                           cv=model['cv'],
-                                          verbose=4)
+                                          verbose=4,
+                                          scoring=model['grid_search_evaluation_metric'])
                     model_.fit(X_train, y_train)
                     print("best parameters of grid search:\n", model_.best_params_)
                     rf = RandomForestClassifier(**model_.best_params_)
 
                     # set best params to model specification
                     set_model_params(best_params=model_.best_params_, model=model)
+                    gridsearch_model_specs_collected[target] = model_.best_params_
                     model_specs_ = extract_model_specification(method=model['method'],
                                                                selected_feature_set=feat_set_,
                                                                target=target)
@@ -144,15 +147,18 @@ if __name__ == "__main__":
                                              models_collected=models_collected,
                                              y_preds_collected=y_preds_collected,
                                              plot=True,
-                                             save_plot=True)
+                                             save_plot=True,
+                                             graph_format=model['graph_format'])
 
         df_feat_importances = model_eval_results.get_feature_importances(filepath=graphs_path)
         df_critereons = model_eval_results.criterions(verbose=True)
         df_cnf_matrix_measures = model_eval_results.get_confusion_matrix(filepath=graphs_path, verbose=True)
         model_eval_results.roc_curve(filepath=graphs_path)
-        df_combined_accuracies = model_eval_results.get_combined_accuracies(filepath=graphs_path)
-        # model_eval_results.violin_plots(filepath=graphs_path)
-        # model_eval_results.boxplots(filepath=graphs_path)
+        df_combined_accuracies = model_eval_results.get_combined_metric(filepath=graphs_path, metric='accuracy')
+        df_combined_f1_scores = model_eval_results.get_combined_metric(filepath=graphs_path, metric='f1')
+
+        # correlations between behavioral traits
+        model_eval_results.correlations_between_traits(filepath=tables_path)
 
         """
         Store results
@@ -162,14 +168,21 @@ if __name__ == "__main__":
         store_results(df=df_critereons, filename="criterions", filepath=tables_path, model_specs=model_specs_collected)
         store_results(df=df_cnf_matrix_measures, filename="cnf_matrix", filepath=tables_path,
                       model_specs=model_specs_collected)
-        store_results(df=df_combined_accuracies, filename="combined_accuracies", filepath=tables_path,
+        store_results(df=df_combined_accuracies, filename="combined_accuracy_scores", filepath=tables_path,
+                      model_specs=model_specs_collected)
+        store_results(df=df_combined_f1_scores, filename="combined_f1_scores", filepath=tables_path,
                       model_specs=model_specs_collected)
 
-    # plot accuracies of all feature sets and targets
-    model_eval_results.plot_combined_accuracies(filepath=graphs_path, load_from_tables_path=tables_path)
+        # store grid search parameters and set of optimal parameters
+        if model['do_grid_search']:
+            store_grid_search_params(random_forest_param_grid=random_forest_param_grid,
+                                     gridsearch_model_specs_collected=gridsearch_model_specs_collected,
+                                     feature_set=feat_set_,
+                                     filepath=tables_path, filename="gridsearch_params")
 
-    # correlations between behavioral traits
-    model_eval_results.correlations_between_traits(filepath=tables_path, filename="correlations_traits")
+    # plot accuracies of all feature sets and targets
+    model_eval_results.plot_metric_combined(filepath=graphs_path, load_from_tables_path=tables_path, metric="accuracy")
+    model_eval_results.plot_metric_combined(filepath=graphs_path, load_from_tables_path=tables_path, metric="f1")
 
     endtime = time.time()
     print("time:", round(endtime - starttime, 2), "seconds")

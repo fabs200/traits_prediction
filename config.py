@@ -19,10 +19,10 @@ feature sets
 
 feature_sets = {
     'feature_set_1': consumption_features,
-    # 'feature_set_2': consumption_features + financial_account_features,
-    # 'feature_set_3': consumption_features + demographics_features,
-    # 'feature_set_4': consumption_features + financial_account_features + demographics_features,
-    # 'feature_set_5': consumption_subcategories + demographics_features
+    'feature_set_2': consumption_features + financial_account_features,
+    'feature_set_3': consumption_features + demographics_features,
+    'feature_set_4': consumption_features + financial_account_features + demographics_features,
+    'feature_set_5': consumption_subcategories + demographics_features
 }
 
 
@@ -43,22 +43,29 @@ model = {
 
     'cv': 5,  # cross validations
 
+    'graph_format': '.pdf',  # graph_format
+
     ### logistic classification
     'Cs': 1,  # inverse regularization
     'solver': 'liblinear',  # liblinear solver for small sample sizes
     'penalty': 'l2',  # penalty to reduce overfitting, default l2 (l1 shrinks down coef to zero if not important)
 
     ### random forest classification
-    'do_grid_search': False,  # True if do a grid search and select best_params_, otherwise below params are chosen
-
     'min_samples_split': 0.1,  # e.g. 0.1 = 10% or 10 = 10 obs, default 2
     'max_depth': 10,  # max depth of tree, # nodes, default None
     'min_samples_leaf': 1,  # The minimum number of samples required to be at a leaf node, default 1
     'max_features': 10,  # The number of features to consider when looking for the best split, default "sqrt"
     'n_estimators': 500,  # number of trees
-    'class_weight': "balanced"  # default: None, class weights e.g. y={0, 1} -> weights={1:10}
+    'class_weight': "balanced",  # default: None, class weights e.g. y={0, 1} -> weights={1:10}
 
-    ### random forest regression
+    # random forest grid search
+    'do_grid_search': True,  # True if do a grid search and select best_params_, otherwise below params are chosen
+    # The scoring parameter: defining model evaluation rules,
+    # Link: https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter
+    'grid_search_evaluation_metric': 'accuracy',
+
+
+### random forest regression
     # 'min_samples_split': 5,  # e.g. 0.1 = 10% or 10 = 10 obs, default 2
     # 'max_depth': 15,  # max depth of tree, # nodes, default None
     # 'min_samples_leaf': 10,  # The minimum number of samples required to be at a leaf node, default 1
@@ -71,11 +78,11 @@ model = {
 ### random forest classification
 random_forest_param_grid = {
     'bootstrap': [False],
-    'max_depth': [5, 8, 10, 12, 15],
-    'max_features': [8, 10, 12, 15],
-    'min_samples_leaf': [1, 2, 5],
-    'min_samples_split': [0.05, 0.1, 0.15, 0.2],
-    'n_estimators': [200, 300, 500]
+    'max_depth': [8],
+    'max_features': [12],
+    'min_samples_leaf': [1],
+    'min_samples_split': [0.01],
+    'n_estimators': [300]
 }
 
 ### random forest regression

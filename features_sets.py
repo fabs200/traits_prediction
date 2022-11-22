@@ -351,7 +351,7 @@ feature_names_nicely = {
     "log_sc_versandhandel":         "mail-order",
     "log_sc_virtuelle_gueter":      "virtual goods",
     "log_sc_wasser":                "water",
-    "log_sc_werkstatt_service": "   repair shot service",
+    "log_sc_werkstatt_service": "   repair shop service",
     "log_sc_zahnzusatzversicheru":  "dental supplementary insurance",
     "log_sc_zinsen_entgelte":       "interest",
 }

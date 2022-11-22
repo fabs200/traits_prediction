@@ -116,10 +116,12 @@ for trait in behavioral_traits:
 
 # drop vars in consumption_subcategories if x% are zeros.
 # Note: All in consumption_features are filled. Thus, no need for additional filtering here
-drop_zero_var_list = df_prep[consumption_features +
-                             consumption_subcategories +
-                             demographics_features +
-                             financial_account_features].quantile(q=model['drop_consumption_vars_at_pct']).reset_index()
-drop_zero_var_list = drop_zero_var_list[drop_zero_var_list[model['drop_consumption_vars_at_pct']] == 0.0]
-print("Following consumption vars mostly missing and will be excluded", drop_zero_var_list['index'].to_list())
-df_prep = df_prep.drop(drop_zero_var_list['index'], axis=1)
+# UPDATE: features that are missing are already exluded in feature_sets.py
+
+# drop_zero_var_list = df_prep[consumption_features +
+#                              consumption_subcategories +
+#                              demographics_features +
+#                              financial_account_features].quantile(q=model['drop_consumption_vars_at_pct']).reset_index()
+# drop_zero_var_list = drop_zero_var_list[drop_zero_var_list[model['drop_consumption_vars_at_pct']] == 0.0]
+# print("Following consumption vars mostly missing and will be excluded", drop_zero_var_list['index'].to_list())
+# df_prep = df_prep.drop(drop_zero_var_list['index'], axis=1)

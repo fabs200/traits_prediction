@@ -328,38 +328,48 @@ class ModelEvaluation:
 
         return df_cnf_matrix_measures
 
-    def get_combined_accuracies(self, filepath=None):
+    def get_combined_metric(self, filepath=None, metric='accuracy'):
         """
-        this function produces all accuracies, puts them into a df and plots data
-        :param filepath: specify filepath where graph will be saved
+        this function produces all accuracies/f1-scores for all targets, puts them into a df and plots data
+        :param filepath: str, specify filepath where graph will be saved
+        :param metric: str, specify metric, 'accuracy' or 'f1'
         :return: df, pd.DataFrame with accuracies, targets and model_specs
         """
 
         dict_temp = {}
-        accuracy_score_, model_specs_ = [], []
-        filename_ = f"accuracies_{self.model_specs_collected[self.targets[0]]}{self.graph_format}"
+        metric_score_, model_specs_ = [], []
+        filename_ = f"{metric}_{self.model_specs_collected[self.targets[0]]}{self.graph_format}"
 
-        # drop feature-set <nbr> from model spec string
         model_temp_ = self._model_specs_collected[self.targets[0]].split("_")
         model_spec_ = "_".join([j for i, j in enumerate(model_temp_) if i not in [2, 3]])
 
-        for target in self.targets:
-            accuracy_score_.append(metrics.accuracy_score(y_true=self._y_tests_collected[target],
-                                                          y_pred=self._y_preds_collected[target]))
-            model_specs_.append(self._model_specs_collected[target])
+        # feature set
+        fset_ = "_".join(model_temp_[2:4])
 
-        dict_temp['accuracy_score'] = accuracy_score_
+        if metric == 'accuracy':
+            for target in self.targets:
+                metric_score_.append(metrics.accuracy_score(y_true=self._y_tests_collected[target],
+                                                            y_pred=self._y_preds_collected[target]))
+                model_specs_.append(self._model_specs_collected[target])
+        else:
+            for target in self.targets:
+                metric_score_.append(metrics.f1_score(y_true=self._y_tests_collected[target],
+                                                      y_pred=self._y_preds_collected[target]))
+                model_specs_.append(self._model_specs_collected[target])
+
+        dict_temp[f'{metric}_score'] = metric_score_
         dict_temp['target'] = self.targets
         dict_temp['model_specs'] = model_spec_
+        dict_temp['feature_set'] = fset_
 
-        df = pd.DataFrame(dict_temp, columns=['accuracy_score', 'target', 'model_specs'])
+        df = pd.DataFrame(dict_temp, columns=[f'{metric}_score', 'target', 'model_specs', 'feature_set'])
 
         if self.plot:
             x_pos = range(len(df['target']))
             targets_ = [t.replace("i_", "") for t in df['target']]
-            plt.bar(x_pos, df['accuracy_score'], color=color_palette[0])
+            plt.bar(x_pos, df[f'{metric}_score'], color=color_palette[0])
             # plt.xlabel('behavioral traits')
-            plt.ylabel('accuracy')
+            plt.ylabel(f'{metric}')
             plt.xticks(x_pos, targets_, rotation=45)
             plt.tight_layout()
             if self.save_plot:
@@ -573,21 +583,22 @@ class ModelEvaluation:
 
         return auc_scores
 
-    def plot_combined_accuracies(self, load_from_tables_path=None, filepath=None):
+    def plot_metric_combined(self, load_from_tables_path=None, filepath=None, metric='accuracy'):
         """
         this function gathers all accuracies of all traits and all feature_sets and plots them altogether.
         :param load_from_tables_path: table_path where table is saved to from get_combined_accuracies()
-        :param filepath: path where plot will be saved to
+        :param metric: str, accuracy or f1
+        :param filepath: str, path where plot will be saved to
         :return: None
         """
 
         # select model, drop "set_*_"
         model_temp_ = self._model_specs_collected[self.targets[0]].split("_")
         model_ = "_".join([j for i, j in enumerate(model_temp_) if i not in [2, 3]])
-        filename_ = f"combined_accuracies_{model_}{self.graph_format}"
+        filename_ = f"combined_{metric}_{model_}{self.graph_format}"
 
         # read in accuracies and select current model_specs
-        df = pd.read_excel(f"{load_from_tables_path}combined_accuracies.xlsx")
+        df = pd.read_excel(f"{load_from_tables_path}combined_{metric}_scores.xlsx")
         df = df[df['model_specs'] == model_]
 
         # extract feature sets from model
@@ -598,19 +609,18 @@ class ModelEvaluation:
         df['target'] = df['target'].str.replace('i_', '')
 
         # Draw a nested barplot to show survival for class and sex
-        sns.catplot(x="target", y="accuracy_score", hue="feature_set", data=df, kind="bar")
-        plt.ylabel("accuracy score")
+        sns.catplot(x="target", y=f"{metric}_score", hue="feature_set", data=df, kind="bar")
+        plt.ylabel(f"{metric} score")
         plt.xlabel("")
         plt.xticks(rotation=45)
         plt.legend("", bbox_to_anchor=(1.3, 1.0), loc='upper left')
         plt.tight_layout()
-        plt.savefig(f"{filepath}/{filename_}")
+        plt.savefig(f"{filepath}{filename_}")
         plt.show()
 
-    def correlations_between_traits(self, filepath=None, filename=None):
+    def correlations_between_traits(self, filepath=None):
         """
         this function generates an excel sheet with all behavioral traits correlated with each other
-        :param filename: str, specify file name
         :param filepath: str, specify where excel sheet should be saved to
         :return: None
         """
@@ -653,14 +663,23 @@ class ModelEvaluation:
         Store results to Excel
         """
 
-        filename_ = f"{filename}.xlsx"
+        # filename
+        model_temp_ = self._model_specs_collected[self.targets[0]].split("_")
+        model_spec_ = "_".join([j for i, j in enumerate(model_temp_) if i not in [0]])
+        filename_ = f"corrmat_{model_spec_}.xlsx"
+
+        # create folder "correlations/"
+        if not os.path.exists(filepath + "correlations/"):
+            # Create a new directory because it does not exist
+            os.makedirs(filepath + "correlations/")
 
         # if not exists, create empty Excel file
-        if not os.path.exists(filepath + filename_):
-            writer = pd.ExcelWriter(filepath + filename_, engine='xlsxwriter')
+        if not os.path.exists(filepath + "correlations/" + filename_):
+            writer = pd.ExcelWriter(filepath + "correlations/" + filename_, engine='xlsxwriter')
             writer.save()
         # loop over each correlation matrix and append to new sheet in Excel file
         for res in results:
-            with pd.ExcelWriter(filepath + filename_, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
+            with pd.ExcelWriter(filepath + "correlations/" + filename_,
+                                engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
                 results[res].to_excel(writer, res, index=True)
         print(f"{filename_} stored to {filepath}")
