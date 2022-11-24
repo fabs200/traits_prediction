@@ -6,8 +6,8 @@
 #     'effort_std',
 #     # 'selfcontrol_std',
 #     # 'lossaversion_std',
-#     'selfcontrol_factor',
-#     'lossaversion_factor'
+#     'selfcontrol_std',
+#     'lossaversion_std'
 # ]
 behavioral_traits = [
     'risk',

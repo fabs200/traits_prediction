@@ -51,6 +51,7 @@ model = {
     'penalty': 'l2',  # penalty to reduce overfitting, default l2 (l1 shrinks down coef to zero if not important)
 
     ### random forest classification
+    # NOTE: After running Grid Search, write optimal Parameters to config.py !
     'min_samples_split': 0.1,  # e.g. 0.1 = 10% or 10 = 10 obs, default 2
     'max_depth': 10,  # max depth of tree, # nodes, default None
     'min_samples_leaf': 1,  # The minimum number of samples required to be at a leaf node, default 1
@@ -59,7 +60,7 @@ model = {
     'class_weight': "balanced",  # default: None, class weights e.g. y={0, 1} -> weights={1:10}
 
     # random forest grid search
-    'do_grid_search': True,  # True if do a grid search and select best_params_, otherwise below params are chosen
+    'do_grid_search': False,  # True if do a grid search and select best_params_, otherwise below params are chosen
     # The scoring parameter: defining model evaluation rules,
     # Link: https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter
     'grid_search_evaluation_metric': 'accuracy',
@@ -76,12 +77,13 @@ model = {
 }
 
 ### random forest classification
+# NOTE: After running Grid Search, write optimal Parameters to config.py !
 random_forest_param_grid = {
     'bootstrap': [False],
-    'max_depth': [8],
-    'max_features': [12],
+    'max_depth': [10],
+    'max_features': [10],
     'min_samples_leaf': [1],
-    'min_samples_split': [0.01],
+    'min_samples_split': [0.01, 0.05],
     'n_estimators': [300]
 }
 

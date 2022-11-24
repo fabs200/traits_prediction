@@ -15,7 +15,7 @@ def store_results(df=None, filepath=None, filename=None, model_specs=None):
     sheet_name_ = f"{filename}"
     cols_ = list(set(list(df.columns) + ['model']))
 
-    # if not exists, create empty excel sheet
+    # if not exists, create empty Excel sheet
     if not os.path.exists(filepath+filename_):
         writer = pd.ExcelWriter(filepath+filename_, engine='xlsxwriter')
         writer.save()
@@ -29,15 +29,18 @@ def store_results(df=None, filepath=None, filename=None, model_specs=None):
     df_full = pd.DataFrame(df_full, columns=cols_)
 
     if not model_specs is None:
-        df['model'] = model_specs[list(model_specs.keys())[0]].\
+        model_ = model_specs[list(model_specs.keys())[0]].\
             replace(list(model_specs.keys())[0], '').replace('model__', '')
+        # model_ = model_.split("_")
+        # model_ = "_".join([j for i, j in enumerate(model_) if i not in [2, 3]])
+        df['model'] = model_
     df_full = df_full.append(df, ignore_index=True)
     df_full = df_full.drop_duplicates().dropna(how='all')
     df_full.to_excel(filepath+filename_, header=1, sheet_name=sheet_name_, index=False)
     print(f"{filename_} stored to {filepath}")
 
 
-def extract_model_specification(method='logistic', selected_feature_set=None, target=None):
+def extract_model_specification(method='logistic', selected_feature_set=None):
     if method is None:
         return None
     elif method == 'logistic':

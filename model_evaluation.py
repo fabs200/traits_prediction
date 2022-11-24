@@ -328,11 +328,12 @@ class ModelEvaluation:
 
         return df_cnf_matrix_measures
 
-    def get_combined_metric(self, filepath=None, metric='accuracy'):
+    def get_combined_metric(self, filepath=None, metric='accuracy', feature_set=None):
         """
         this function produces all accuracies/f1-scores for all targets, puts them into a df and plots data
         :param filepath: str, specify filepath where graph will be saved
         :param metric: str, specify metric, 'accuracy' or 'f1'
+        :param feature_set: str, specify feature_set
         :return: df, pd.DataFrame with accuracies, targets and model_specs
         """
 
@@ -342,9 +343,6 @@ class ModelEvaluation:
 
         model_temp_ = self._model_specs_collected[self.targets[0]].split("_")
         model_spec_ = "_".join([j for i, j in enumerate(model_temp_) if i not in [2, 3]])
-
-        # feature set
-        fset_ = "_".join(model_temp_[2:4])
 
         if metric == 'accuracy':
             for target in self.targets:
@@ -360,7 +358,7 @@ class ModelEvaluation:
         dict_temp[f'{metric}_score'] = metric_score_
         dict_temp['target'] = self.targets
         dict_temp['model_specs'] = model_spec_
-        dict_temp['feature_set'] = fset_
+        dict_temp['feature_set'] = "_".join(feature_set.split("_")[1:])
 
         df = pd.DataFrame(dict_temp, columns=[f'{metric}_score', 'target', 'model_specs', 'feature_set'])
 
@@ -608,7 +606,7 @@ class ModelEvaluation:
         df['feature_set'] = df['feature_set'].str.replace("_", " ")
         df['target'] = df['target'].str.replace('i_', '')
 
-        # Draw a nested barplot to show survival for class and sex
+        # bar plot
         sns.catplot(x="target", y=f"{metric}_score", hue="feature_set", data=df, kind="bar")
         plt.ylabel(f"{metric} score")
         plt.xlabel("")
@@ -620,8 +618,8 @@ class ModelEvaluation:
 
     def correlations_between_traits(self, filepath=None):
         """
-        this function generates an excel sheet with all behavioral traits correlated with each other
-        :param filepath: str, specify where excel sheet should be saved to
+        this function generates an Excel sheet with all behavioral traits correlated with each other
+        :param filepath: str, specify where Excel sheet should be saved to
         :return: None
         """
 
