@@ -24,7 +24,7 @@ def store_results(df=None, filepath=None, filename=None, model_specs=None):
         )
         print("new file created!")
 
-    df_full = pd.read_excel(filepath+filename_, sheet_name=sheet_name_)
+    df_full = pd.read_excel(filepath+filename_, sheet_name=sheet_name_, engine='openpyxl')
     df_full = df_full.dropna()
     df_full = pd.DataFrame(df_full, columns=cols_)
 

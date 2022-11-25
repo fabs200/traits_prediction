@@ -25,11 +25,6 @@ starttime = time.time()
 Specify # of selected feature_sets and dependent var
 """
 
-# TEST
-# i_ = 0
-# feat_set_ = "feature_set_2"
-# target = targets[i_]
-# graph_format = ".png"
 
 if __name__ == "__main__":
 

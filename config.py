@@ -19,10 +19,9 @@ feature sets
 
 feature_sets = {
     'feature_set_1': consumption_features,
-    'feature_set_2': consumption_features + financial_account_features,
-    'feature_set_3': consumption_features + demographics_features,
-    'feature_set_4': consumption_features + financial_account_features + demographics_features,
-    'feature_set_5': consumption_subcategories + demographics_features
+    'feature_set_2': consumption_subcategories,
+    'feature_set_3': consumption_features + financial_account_features + demographics_features,
+    'feature_set_4': consumption_subcategories + financial_account_features + demographics_features
 }
 
 
@@ -53,9 +52,9 @@ model = {
     ### random forest classification
     # NOTE: After running Grid Search, write optimal Parameters to config.py !
     'min_samples_split': 0.1,  # e.g. 0.1 = 10% or 10 = 10 obs, default 2
-    'max_depth': 10,  # max depth of tree, # nodes, default None
-    'min_samples_leaf': 1,  # The minimum number of samples required to be at a leaf node, default 1
-    'max_features': 10,  # The number of features to consider when looking for the best split, default "sqrt"
+    'max_depth': 120,  # max depth of tree, # nodes, default None
+    'min_samples_leaf': 10,  # The minimum number of samples required to be at a leaf node, default 1
+    'max_features': None,  # The number of features to consider when looking for the best split, default "sqrt"
     'n_estimators': 500,  # number of trees
     'class_weight': "balanced",  # default: None, class weights e.g. y={0, 1} -> weights={1:10}
 
@@ -78,13 +77,21 @@ model = {
 
 ### random forest classification
 # NOTE: After running Grid Search, write optimal Parameters to config.py !
+# random_forest_param_grid = {
+#     'bootstrap': [False],
+#     'max_depth': [5],
+#     'max_features': ["sqrt", "log2"],
+#     'min_samples_leaf': [1],
+#     'min_samples_split': [0.01],
+#     'n_estimators': [200]
+# }
 random_forest_param_grid = {
     'bootstrap': [False],
-    'max_depth': [10],
-    'max_features': [10],
-    'min_samples_leaf': [1],
-    'min_samples_split': [0.01, 0.05],
-    'n_estimators': [300]
+    'max_depth': [5, 10, 15, 30, 60, 120],
+    'max_features': ["sqrt", "log2", None],
+    'min_samples_leaf': [1, 5, 10],
+    'min_samples_split': [0.01, 0.05, 0.1],
+    'n_estimators': [200, 300, 400, 500]
 }
 
 ### random forest regression
