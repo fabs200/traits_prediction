@@ -52,10 +52,10 @@ model = {
     ### random forest classification
     # NOTE: After running Grid Search, write optimal Parameters to config.py !
     'min_samples_split': 0.1,  # e.g. 0.1 = 10% or 10 = 10 obs, default 2
-    'max_depth': 120,  # max depth of tree, # nodes, default None
-    'min_samples_leaf': 10,  # The minimum number of samples required to be at a leaf node, default 1
-    'max_features': None,  # The number of features to consider when looking for the best split, default "sqrt"
-    'n_estimators': 500,  # number of trees
+    'max_depth': 9,  # max depth of tree, # nodes, default None
+    'min_samples_leaf': 1,  # The minimum number of samples required to be at a leaf node, default 1
+    'max_features': "sqrt",  # The number of features to consider when looking for the best split, default "sqrt"
+    'n_estimators': 400,  # number of trees
     'class_weight': "balanced",  # default: None, class weights e.g. y={0, 1} -> weights={1:10}
 
     # random forest grid search
@@ -87,11 +87,11 @@ model = {
 # }
 random_forest_param_grid = {
     'bootstrap': [False],
-    'max_depth': [5, 10, 15, 30, 60, 120],
-    'max_features': ["sqrt", "log2", None],
-    'min_samples_leaf': [1, 5, 10],
-    'min_samples_split': [0.01, 0.05, 0.1],
-    'n_estimators': [200, 300, 400, 500]
+    'max_depth': [5, 7, 10, 12],
+    'max_features': ["sqrt"],
+    'min_samples_leaf': [1],
+    'min_samples_split': [2],
+    'n_estimators': [200, 300, 400]
 }
 
 ### random forest regression
