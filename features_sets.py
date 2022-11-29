@@ -28,7 +28,8 @@ demographics_features = [
     'i_student',
     # 'i_retired',
     # 'i_selfemployed',
-    # 'i_homeowner_imp'
+    'i_employed_imp',
+    'i_homeowner_imp'
 ]
 
 financial_account_features = [
@@ -42,7 +43,6 @@ financial_account_features = [
     'numberofaccounts',
     # 'numberofdepotaccounts'
 ]
-
 
 consumption_subcategories = [
     "log_sc_abfallbeseitigung",
@@ -174,6 +174,7 @@ feature_names_nicely = {
     'i_married_imp':                'married',
     'i_student':                    'student',
     'i_homeowner_imp':              'homeowner',
+    'i_employed_imp':               'employed',
     'has_depot_recoded':            'has depot',
     'n_insurance':                  'number of insurances',
     'number_of_depots':             'number of depots',
@@ -216,6 +217,20 @@ feature_names_nicely = {
     'selfcontrol_factor':           'self-control',
     'lossaversion_std':             'loss-aversion',
     'lossaversion_factor':          'loss-aversion',
+    'risk':                         'risk preference',
+    'trust':                        'general trust',
+    'patience':                     'patience',
+    'procrastination':              'procrastination',
+    'effort':                       'effort',
+    'selfcontrol':                  'self-control',
+    'lossaversion':                 'loss-aversion',
+    'i_risk':                       'dummy risk-seeking',
+    'i_trust':                      'dummy trust',
+    'i_patience':                   'dummy patience',
+    'i_procrastination':            'dummy procrastination',
+    'i_effort':                     'dummy effort',
+    'i_selfcontrol':                'dummy self-control',
+    'i_lossaversion':               'dummy loss-aversion',
     "log_sc_abfallbeseitigung":     "waste disposal",
     "log_sc_altersvorsorge":        "pension scheme",
     "log_sc_apotheke":              "pharmarcy",
@@ -353,7 +368,7 @@ feature_names_nicely = {
     "log_sc_versandhandel":         "mail-order",
     "log_sc_virtuelle_gueter":      "virtual goods",
     "log_sc_wasser":                "water",
-    "log_sc_werkstatt_service": "   repair shop service",
+    "log_sc_werkstatt_service":     "repair shop service",
     "log_sc_zahnzusatzversicheru":  "dental supplementary insurance",
     "log_sc_zinsen_entgelte":       "interest",
 }
