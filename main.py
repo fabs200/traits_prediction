@@ -11,7 +11,7 @@ from config import model, feature_sets, random_forest_param_grid, tables_path, g
 from load_data import df_prep
 from model_evaluation import ModelEvaluation
 from utils import store_results, extract_model_specification, set_model_params, store_grid_search_params
-from targets import behavioral_traits, targets
+from targets import targets
 
 # capture warnings
 warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
@@ -151,6 +151,8 @@ if __name__ == "__main__":
                                                                         feature_set=feat_set_)
         df_combined_f1_scores = model_eval_results.get_combined_metric(filepath=graphs_path, metric='f1',
                                                                        feature_set=feat_set_)
+        df_combined_auc_scores = model_eval_results.get_combined_metric(filepath=graphs_path, metric='auc',
+                                                                        feature_set=feat_set_)
 
         # correlations between behavioral traits
         model_eval_results.correlations_between_traits(filepath=tables_path)
@@ -167,6 +169,8 @@ if __name__ == "__main__":
                       model_specs=model_specs_collected)
         store_results(df=df_combined_f1_scores, filename="combined_f1_scores", filepath=tables_path,
                       model_specs=model_specs_collected)
+        store_results(df=df_combined_auc_scores, filename="combined_auc_scores", filepath=tables_path,
+                      model_specs=model_specs_collected)
 
         # store grid search parameters and set of optimal parameters
         if model['do_grid_search']:
@@ -182,6 +186,8 @@ if __name__ == "__main__":
                                                 metric="accuracy")
         model_eval_results.plot_metric_combined(filepath=graphs_path, load_from_tables_path=tables_path,
                                                 metric="f1")
+        model_eval_results.plot_metric_combined(filepath=graphs_path, load_from_tables_path=tables_path,
+                                                metric="auc")
 
     endtime = time.time()
     print("time:", round(endtime - starttime, 2), "seconds")

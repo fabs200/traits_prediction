@@ -332,7 +332,7 @@ class ModelEvaluation:
         """
         this function produces all accuracies/f1-scores for all targets, puts them into a df and plots data
         :param filepath: str, specify filepath where graph will be saved
-        :param metric: str, specify metric, 'accuracy' or 'f1'
+        :param metric: str, specify metric, 'accuracy' or 'f1' or 'auc'
         :param feature_set: str, specify feature_set
         :return: df, pd.DataFrame with accuracies, targets and model_specs
         """
@@ -349,10 +349,15 @@ class ModelEvaluation:
                 metric_score_.append(metrics.accuracy_score(y_true=self._y_tests_collected[target],
                                                             y_pred=self._y_preds_collected[target]))
                 model_specs_.append(self._model_specs_collected[target])
-        else:
+        elif metric == 'f1':
             for target in self.targets:
                 metric_score_.append(metrics.f1_score(y_true=self._y_tests_collected[target],
                                                       y_pred=self._y_preds_collected[target]))
+                model_specs_.append(self._model_specs_collected[target])
+        elif metric == 'auc':
+            for target in self.targets:
+                metric_score_.append(metrics.roc_auc_score(y_true=self._y_tests_collected[target],
+                                                           y_score=self._y_preds_collected[target]))
                 model_specs_.append(self._model_specs_collected[target])
 
         dict_temp[f'{metric}_score'] = metric_score_
