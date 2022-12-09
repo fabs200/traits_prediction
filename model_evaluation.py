@@ -4,6 +4,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.model_selection import StratifiedKFold
+from sklearn.inspection import permutation_importance
 from sklearn import metrics
 from utils import set_figsize, color_palette, corrmat_with_pval
 from features_sets import feature_names_nicely
@@ -75,71 +76,141 @@ class ModelEvaluation:
     def graph_format(self):
         return self._graph_format
 
-    def get_feature_importances(self, filepath=None) -> pd.DataFrame:
+    def get_feature_importances(self, filepath=None, method='permutation',
+                                X_test=None, y_test=None, n_repeats=10, random_state=1) -> pd.DataFrame:
+        """
+        calculates feature importance of all features for all targets.
+        See: https://scikit-learn.org/stable/modules/ensemble.html#random-forest-feature-importance
+        :param filepath: str, specify location where to save file
+        :param method: str, either 'permutation', or 'mdi' (Mean Decrease in Impurity (MDI))
+        :param X_test: pandas dataframe X_test from model, for permutation only
+        :param y_test: pandas dataframe with y_test, for permutation only
+        :param n_repeats: number of permutations
+        :param random_state: random state, for permutation only
+        :return: pandas dataframe with feature importances
+        """
 
         importances_collected = {}
         df_feat_importances_collected = pd.DataFrame([], columns=['feature', 'importance', 'target', 'model'])
 
-        if self._model_method == 'logistic':
-            for i, target in enumerate(self._targets):
-                importances = self.models_collected[i].coef_[0]
-                filename_ = f"{target}_{self._model_specs_collected[i]}{self._graph_format}"
-                feat_importances = pd.Series(importances, index=self._X_test.columns)
-                if self._plot:
-                    feat_importances.nlargest(10).sort_values(ascending=True) \
-                        .plot(kind='barh', title='Feature Importance', color=color_palette[0])
-                    plt.xlabel('Mean decreasing in impurity')
-                    plt.tight_layout()
-                    if self._save_plot:
-                        plt.savefig(filepath + f'featimp_{filename_}')
-                    plt.show()
-                importances_collected[target] = importances
+        if method == "mdi":
 
-                # put feature importances for current target into df
-                df_feat_importance_curr = pd.DataFrame(feat_importances, columns=["importance"])
-                df_feat_importance_curr['feature'] = df_feat_importance_curr.index
-                df_feat_importance_curr['target'] = target
-                df_feat_importance_curr['model'] = {self._model_specs_collected[i]}
+            if self._model_method == 'logistic':
+                for i, target in enumerate(self._targets):
+                    importances = self.models_collected[i].coef_[0]
+                    filename_ = f"{target}_{self._model_specs_collected[i]}{self._graph_format}"
+                    feat_importances = pd.Series(importances, index=self._X_test.columns)
+                    if self._plot:
+                        feat_importances.nlargest(10).sort_values(ascending=True) \
+                            .plot(kind='barh', title='Feature Importance', color=color_palette[0])
+                        plt.xlabel('Mean decreasing in impurity')
+                        plt.tight_layout()
+                        if self._save_plot:
+                            plt.savefig(filepath + f'featimp_{filename_}')
+                        plt.show()
+                    importances_collected[target] = importances
 
-                # collect dfs
-                df_feat_importances_collected = df_feat_importances_collected.append(df_feat_importance_curr,
-                                                                                     ignore_index=True)
+                    # put feature importances for current target into df
+                    df_feat_importance_curr = pd.DataFrame(feat_importances, columns=["importance"])
+                    df_feat_importance_curr['feature'] = df_feat_importance_curr.index
+                    df_feat_importance_curr['target'] = target
+                    df_feat_importance_curr['model'] = {self._model_specs_collected[i]}
 
+                    # collect dfs
+                    df_feat_importances_collected = df_feat_importances_collected.append(df_feat_importance_curr,
+                                                                                         ignore_index=True)
+
+            else:
+                for i, target in enumerate(self._targets):
+                    importances = self.models_collected[target].feature_importances_
+                    filename_ = f"{target}_{self.model_specs_collected[target]}{self._graph_format}"
+                    # std = np.std([tree.feature_importances_ for tree in model_.estimators_], axis=0)
+                    # feat_importances = pd.Series(importances, index=model_.feature_names_in_)
+                    feat_importances = pd.Series(importances,
+                                                 index=[feature_names_nicely[el] for el in
+                                                        self.models_collected[target].feature_names_in_])
+                    if self._plot:
+                        feat_importances.nlargest(10).sort_values(ascending=True).plot(kind='barh',
+                                                                                       title='Feature Importance',
+                                                                                       color=color_palette[0],
+                                                                                       figsize=set_figsize(len(importances)),
+                                                                                       # ylabel='Mean decreasing in impurity'
+                                                                                       )
+                        plt.xlabel('Mean decreasing in impurity')
+                        # plt.rcParams["figure.figsize"] = set_figsize(len(model_.feature_importances_))
+                        plt.tight_layout()
+                        if self._save_plot:
+                            plt.savefig(filepath + f'featimp_{filename_}')
+                        plt.show()
+
+                        # set back to default figsize
+                        plt.rcParams["figure.figsize"] = plt.rcParamsDefault["figure.figsize"]
+
+                    # put feature importances for current target into df
+                    df_feat_importance_curr = pd.DataFrame(feat_importances, columns=["importance"])
+                    df_feat_importance_curr['feature'] = df_feat_importance_curr.index
+                    df_feat_importance_curr['target'] = target
+                    df_feat_importance_curr['model'] = self.model_specs_collected[target]
+
+                    # collect dfs
+                    df_feat_importances_collected = df_feat_importances_collected.append(df_feat_importance_curr,
+                                                                                         ignore_index=True)
+
+        # permutation feature importance
         else:
-            for i, target in enumerate(self._targets):
-                importances = self.models_collected[target].feature_importances_
-                filename_ = f"{target}_{self.model_specs_collected[target]}{self._graph_format}"
-                # std = np.std([tree.feature_importances_ for tree in model_.estimators_], axis=0)
-                # feat_importances = pd.Series(importances, index=model_.feature_names_in_)
-                feat_importances = pd.Series(importances,
-                                             index=[feature_names_nicely[el] for el in
-                                                    self.models_collected[target].feature_names_in_])
-                if self._plot:
-                    feat_importances.nlargest(10).sort_values(ascending=True).plot(kind='barh',
-                                                                                   title='Feature Importance',
-                                                                                   color=color_palette[0],
-                                                                                   figsize=set_figsize(len(importances))
-                                                                                   # ylabel='Mean decreasing in impurity'
-                                                                                   )
-                    plt.xlabel('Mean decreasing in impurity')
-                    # plt.rcParams["figure.figsize"] = set_figsize(len(model_.feature_importances_))
-                    plt.tight_layout()
-                    if self._save_plot:
-                        plt.savefig(filepath + f'featimp_{filename_}')
-                    plt.show()
+            if self._model_method == 'logistic':
+                pass
 
-                    # set back to default figsize
-                    plt.rcParams["figure.figsize"] = plt.rcParamsDefault["figure.figsize"]
+            # random forest
+            else:
+                for i, target in enumerate(self._targets):
+                    res_importances = permutation_importance(
+                        self.models_collected[target],
+                        X_test, y_test[target], n_repeats=n_repeats, random_state=random_state, n_jobs=2
+                    )
+                    filename_ = f"{target}_{self.model_specs_collected[target]}{self._graph_format}"
 
-                # put feature importances for current target into df
-                df_feat_importance_curr = pd.DataFrame(feat_importances, columns=["importance"])
-                df_feat_importance_curr['feature'] = df_feat_importance_curr.index
-                df_feat_importance_curr['target'] = target
-                df_feat_importance_curr['model'] = self.model_specs_collected[target]
+                    sorted_importances_idx = res_importances.importances_mean.argsort()
+                    feat_importances = pd.DataFrame(
+                        res_importances.importances[sorted_importances_idx].T,
+                        columns=X_test.columns[sorted_importances_idx],
+                    )
+                    # write nice feature names
+                    feat_importances = feat_importances.rename(columns=feature_names_nicely)
 
-                # collect dfs
-                df_feat_importances_collected = df_feat_importances_collected.append(df_feat_importance_curr,
-                                                                                     ignore_index=True)
+                    if self._plot:
+
+                        # identify 10 largest features by taking mean, then abs(), then ranking by top 10
+                        top_features = feat_importances.mean().abs().nlargest(10).index
+                        # get list with sorted values by median (midpoint in boxplots)
+                        top_features_sorted = feat_importances[top_features].median().sort_values(ascending=False).index
+
+                        ax = feat_importances[top_features_sorted].plot.box(vert=False, whis=10, color=color_palette[0],
+                                                                            # figsize=set_figsize(feat_importances.shape[1])
+                                                                            )
+                        ax.set_title("Permutation Importances")
+                        ax.axvline(x=0, color="k", linestyle="--")
+                        ax.set_xlabel("Decrease in accuracy score")
+                        ax.figure.tight_layout()
+                        plt.show()
+
+                        if self._save_plot:
+                            plt.savefig(filepath + f'featimp_{filename_}')
+                        plt.show()
+
+                        # set back to default figsize
+                        plt.rcParams["figure.figsize"] = plt.rcParamsDefault["figure.figsize"]
+
+                    # put feature importances for current target into df
+                    # Note: pivot feat_importances such that 1 feature importance value per feature, long
+                    df_feat_importance_curr = pd.DataFrame(feat_importances.mean().T, columns=["importance"])
+                    df_feat_importance_curr['feature'] = df_feat_importance_curr.index
+                    df_feat_importance_curr['target'] = target
+                    df_feat_importance_curr['model'] = self.model_specs_collected[target]
+
+                    # collect dfs
+                    df_feat_importances_collected = df_feat_importances_collected.append(df_feat_importance_curr,
+                                                                                         ignore_index=True)
 
         return df_feat_importances_collected
 

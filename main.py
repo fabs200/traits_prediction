@@ -143,7 +143,12 @@ if __name__ == "__main__":
                                              save_plot=True,
                                              graph_format=model['graph_format'])
 
-        df_feat_importances = model_eval_results.get_feature_importances(filepath=graphs_path)
+        df_feat_importances_mdi = model_eval_results.get_feature_importances(filepath=graphs_path, method='mdi')
+        df_feat_importances_permutation = model_eval_results.get_feature_importances(filepath=graphs_path,
+                                                                                     X_test=X_test, y_test=y_test,
+                                                                                     n_repeats=10,
+                                                                                     random_state=model['random_state'],
+                                                                                     method='permutation')
         df_critereons = model_eval_results.criterions(verbose=True)
         df_cnf_matrix_measures = model_eval_results.get_confusion_matrix(filepath=graphs_path, verbose=True)
         model_eval_results.roc_curve(filepath=graphs_path)
@@ -161,7 +166,8 @@ if __name__ == "__main__":
         Store results
         """
 
-        store_results(df=df_feat_importances, filename="feature_importances", filepath=tables_path)
+        store_results(df=df_feat_importances_mdi, filename="mdi_feature_importances", filepath=tables_path)
+        store_results(df=df_feat_importances_permutation, filename="permut_feature_importances", filepath=tables_path)
         store_results(df=df_critereons, filename="criterions", filepath=tables_path, model_specs=model_specs_collected)
         store_results(df=df_cnf_matrix_measures, filename="cnf_matrix", filepath=tables_path,
                       model_specs=model_specs_collected)
