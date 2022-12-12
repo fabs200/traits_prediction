@@ -166,7 +166,12 @@ class ModelEvaluation:
                 for i, target in enumerate(self._targets):
                     res_importances = permutation_importance(
                         self.models_collected[target],
-                        X_test, y_test[target], n_repeats=n_repeats, random_state=random_state, n_jobs=2
+                        X_test,
+                        y_test[target],
+                        n_repeats=n_repeats,
+                        random_state=random_state,
+                        n_jobs=4,
+                        scoring='f1'  # f1 for binary targets
                     )
                     filename_ = f"{target}_{self.model_specs_collected[target]}{self._graph_format}"
 
