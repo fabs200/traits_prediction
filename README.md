@@ -1,5 +1,16 @@
-# infer behavioral traits from psd2 data
-infer behavioral traits from psd2 data
+# Infering behavioral traits from PSD2-Data
+
+This project uses PSD2 data and infers behavioral traits of bank customers.
+PSD2 data includes data such as financial transaction, demographic and other meta data that is readily available to financial institutions due to PSD2 regulation.
+The objective of this project is to demonstrate how financial institutions can make use of their data to generate new insights of their customers.
+
+# Procedure
+* We specify different feature sets that include different variables. These feature sets vary in data availability, level of detail, vertical and horizontal information on customers.
+* We split the sample into train and test datasets
+* We span a large grid search of random forest parameters with which we train our model with which we estimate each single behavioral trait.
+* We select the best parameter set according to different evaluation measures such as accuracy, f1 score or auc-roc score.
+* Based on the best parameter set, we then predict the test data and evaluate the goodness of fit.
+* Finally, we repeat the steps for each behavioral trait with all different feature sets and report accuracies, parameters, etc. in tables and plots.
 
 ### Model Selection
 1. best parameters:

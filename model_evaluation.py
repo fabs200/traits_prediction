@@ -185,18 +185,27 @@ class ModelEvaluation:
 
                     if self._plot:
 
-                        # identify 10 largest features by taking mean, then abs(), then ranking by top 10
-                        top_features = feat_importances.mean().abs().nlargest(10).index
-                        # get list with sorted values by median (midpoint in boxplots)
-                        top_features_sorted = feat_importances[top_features].median().sort_values(ascending=False).index
+                        # # identify 10 largest features by taking mean, then abs(), then ranking by top 10
+                        # top_features = feat_importances.mean().abs().nlargest(10).index
+                        # # get list with sorted values by median (midpoint in boxplots)
+                        # top_features_sorted = feat_importances[top_features].median().sort_values(ascending=False).index
+                        #
+                        # ax = feat_importances[top_features_sorted].plot.box(vert=False, whis=10, color=color_palette[0],
+                        #                                                     # figsize=set_figsize(feat_importances.shape[1])
+                        #                                                     )
+                        # ax.set_title("Permutation Importances")
+                        # ax.axvline(x=0, color="k", linestyle="--")
+                        # ax.set_xlabel("Decrease in accuracy score")
+                        # ax.figure.tight_layout()
+                        # plt.show()
 
-                        ax = feat_importances[top_features_sorted].plot.box(vert=False, whis=10, color=color_palette[0],
-                                                                            # figsize=set_figsize(feat_importances.shape[1])
-                                                                            )
-                        ax.set_title("Permutation Importances")
-                        ax.axvline(x=0, color="k", linestyle="--")
-                        ax.set_xlabel("Decrease in accuracy score")
-                        ax.figure.tight_layout()
+                        feat_importances.mean().nlargest(10).sort_values(ascending=True).plot(kind='barh',
+                                                                                              title='Permutation Feature Importance',
+                                                                                              color=color_palette[0],
+                                                                                              # yerr=std,
+                                                                                              # ylabel='Mean decreasing in impurity'
+                                                                                              )
+                        plt.tight_layout()
                         plt.show()
 
                         if self._save_plot:
